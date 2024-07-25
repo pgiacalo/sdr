@@ -25,10 +25,10 @@ import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 
 # Parameters
-f_carrier = 1e3  # Carrier frequency in Hz
+f_carrier = 8  # Carrier frequency in Hz, changed to 8 Hz
 sample_rate = 1e4  # Sample rate in Hz
 symbol_rate = 4  # Symbol rate in symbols per second, updating four times per second
-num_symbols = 20  # Number of symbols to display in the animation
+num_symbols = 40  # Increased number of symbols to fill 10 seconds at 4 symbols/sec
 duration = num_symbols / symbol_rate  # Duration of the signal in seconds
 
 # Time array
