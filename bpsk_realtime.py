@@ -42,12 +42,12 @@ samples_per_symbol = int(sample_rate / symbol_rate)
 signal = np.repeat(symbols, samples_per_symbol)
 
 # Initialize the figure and axes
-fig, axs = plt.subplots(3, 1, figsize=(10, 15))
+fig, axs = plt.subplots(3, 1, figsize=(10, 12))  # Adjusted for better fit
 
 # Initialize plots with initial data to avoid empty array issues
-init_time = np.linspace(0, 1/sample_rate, 2)
-init_signal = np.zeros(2)
-frequencies = np.fft.fftfreq(len(init_signal), 1/sample_rate)
+init_signal = signal[:1] if len(signal) > 0 else [0]
+init_time = t[:1] if len(t) > 0 else [0]
+frequencies = np.fft.fftfreq(max(len(init_signal), 1), 1/sample_rate)
 spectrum = np.fft.fft(init_signal)
 
 # Time domain plot
@@ -61,6 +61,7 @@ axs[1].set_title('Frequency Domain')
 axs[1].set_xlabel('Frequency (Hz)')
 axs[1].set_ylabel('Magnitude')
 axs[1].set_xlim(-f_carrier*2, f_carrier*2)
+axs[1].set_ylim(0, np.max(np.abs(spectrum))+1)
 line2, stemlines, baseline = axs[1].stem(frequencies, np.abs(spectrum), 'b', markerfmt=" ", basefmt="-b")
 
 # Constellation diagram
@@ -72,29 +73,27 @@ axs[2].set_ylim(-1.5, 1.5)
 axs[2].grid(True)
 points, = axs[2].plot([], [], 'ro')
 
-def init():
-    line1.set_data([], [])
-    points.set_data([], [])
-    return line1, line2, stemlines, baseline, points
-
 def update(frame):
-    idx = frame * samples_per_symbol
+    idx = max(1, frame * samples_per_symbol)  # Ensure idx is never zero
     # Update time domain plot
     line1.set_data(t[:idx], signal[:idx])
     # Update frequency domain plot
-    frequencies = np.fft.fftfreq(len(signal[:idx]), 1/sample_rate)
-    spectrum = np.fft.fft(signal[:idx])
-    axs[1].clear()
-    axs[1].stem(frequencies, np.abs(spectrum), 'b', basefmt="-b")
-    axs[1].set_xlim(-f_carrier*2, f_carrier*2)
-    axs[1].set_title('Frequency Domain')
-    axs[1].set_xlabel('Frequency (Hz)')
-    axs[1].set_ylabel('Magnitude')
+    if idx > 1:  # Avoid zero-length array for FFT computation
+        frequencies = np.fft.fftfreq(idx, 1/sample_rate)
+        spectrum = np.fft.fft(signal[:idx])
+        axs[1].clear()
+        axs[1].stem(frequencies, np.abs(spectrum), 'b', basefmt="-b")
+        axs[1].set_xlim(-f_carrier*2, f_carrier*2)
+        axs[1].set_ylim(0, np.max(np.abs(spectrum))+1)
+        axs[1].set_title('Frequency Domain')
+        axs[1].set_xlabel('Frequency (Hz)')
+        axs[1].set_ylabel('Magnitude')
     # Update constellation diagram
     points.set_data(symbols[:frame+1], np.zeros(frame+1))
     return line1, line2, stemlines, baseline, points
 
-ani = FuncAnimation(fig, update, frames=num_symbols, init_func=init, blit=False, interval=500)
+ani = FuncAnimation(fig, update, frames=num_symbols + 1, blit=False, interval=500)
 
 plt.tight_layout()
 plt.show()
+
