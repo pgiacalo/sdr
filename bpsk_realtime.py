@@ -19,6 +19,7 @@ This setup should provide a clear visualization of how the BPSK signal changes o
 	- how its time-domain waveform, frequency spectrum, and constellation diagram evolve.
 
 """
+
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
@@ -26,7 +27,7 @@ from matplotlib.animation import FuncAnimation
 # Parameters
 f_carrier = 1e3  # Carrier frequency in Hz
 sample_rate = 1e4  # Sample rate in Hz
-symbol_rate = 2  # Symbol rate in symbols per second, updating twice per second
+symbol_rate = 4  # Symbol rate in symbols per second, updating four times per second
 num_symbols = 20  # Number of symbols to display in the animation
 duration = num_symbols / symbol_rate  # Duration of the signal in seconds
 
@@ -41,28 +42,29 @@ symbols = np.random.choice([-1, 1], size=num_symbols)
 samples_per_symbol = int(sample_rate / symbol_rate)
 signal = np.repeat(symbols, samples_per_symbol)
 
-# Initialize the figure and axes
-fig, axs = plt.subplots(3, 1, figsize=(10, 12))  # Adjusted for better fit
+# Modulate the signal with the carrier
+modulated_signal = signal * np.cos(2 * np.pi * f_carrier * t)
 
-# Initialize plots with initial data to avoid empty array issues
-init_signal = signal[:1] if len(signal) > 0 else [0]
-init_time = t[:1] if len(t) > 0 else [0]
-frequencies = np.fft.fftfreq(max(len(init_signal), 1), 1/sample_rate)
-spectrum = np.fft.fft(init_signal)
+# Initialize the figure and axes
+fig, axs = plt.subplots(3, 1, figsize=(10, 15))
 
 # Time domain plot
 axs[0].set_title('Time Domain Signal')
 axs[0].set_xlabel('Time (s)')
 axs[0].set_ylabel('Amplitude')
-line1, = axs[0].plot(init_time, init_signal, lw=2)
+axs[0].set_xlim(0, duration)
+axs[0].set_ylim(-1.5, 1.5)
+line1, = axs[0].plot(t, modulated_signal, lw=2)
 
 # Frequency domain plot
+initial_frequencies = np.fft.fftfreq(samples_per_symbol, 1/sample_rate)
+initial_spectrum = np.fft.fft(signal[:samples_per_symbol])
 axs[1].set_title('Frequency Domain')
 axs[1].set_xlabel('Frequency (Hz)')
 axs[1].set_ylabel('Magnitude')
 axs[1].set_xlim(-f_carrier*2, f_carrier*2)
-axs[1].set_ylim(0, np.max(np.abs(spectrum))+1)
-line2, stemlines, baseline = axs[1].stem(frequencies, np.abs(spectrum), 'b', markerfmt=" ", basefmt="-b")
+axs[1].set_ylim(0, np.max(np.abs(initial_spectrum)) + 1)
+line2, stemlines, baseline = axs[1].stem(initial_frequencies, np.abs(initial_spectrum), 'b', markerfmt=" ", basefmt="-b")
 
 # Constellation diagram
 axs[2].set_title('Constellation Diagram')
@@ -74,25 +76,32 @@ axs[2].grid(True)
 points, = axs[2].plot([], [], 'ro')
 
 def update(frame):
-    idx = max(1, frame * samples_per_symbol)  # Ensure idx is never zero
-    # Update time domain plot
-    line1.set_data(t[:idx], signal[:idx])
+    idx = max(1, frame * samples_per_symbol)
+    line1.set_data(t[:idx], modulated_signal[:idx])
+    
     # Update frequency domain plot
-    if idx > 1:  # Avoid zero-length array for FFT computation
+    if idx > 0:  # Avoid division by zero
         frequencies = np.fft.fftfreq(idx, 1/sample_rate)
-        spectrum = np.fft.fft(signal[:idx])
+        spectrum = np.fft.fft(modulated_signal[:idx])
         axs[1].clear()
         axs[1].stem(frequencies, np.abs(spectrum), 'b', basefmt="-b")
         axs[1].set_xlim(-f_carrier*2, f_carrier*2)
-        axs[1].set_ylim(0, np.max(np.abs(spectrum))+1)
+        axs[1].set_ylim(0, np.max(np.abs(spectrum)) + 1)
         axs[1].set_title('Frequency Domain')
         axs[1].set_xlabel('Frequency (Hz)')
         axs[1].set_ylabel('Magnitude')
+    
     # Update constellation diagram
     points.set_data(symbols[:frame+1], np.zeros(frame+1))
     return line1, line2, stemlines, baseline, points
 
-ani = FuncAnimation(fig, update, frames=num_symbols + 1, blit=False, interval=500)
+def init():
+    line1.set_data([], [])
+    points.set_data([], [])
+    return line1, line2, baseline, points
+
+# Set up the animation
+ani = FuncAnimation(fig, update, frames=num_symbols, init_func=init, blit=False, interval=250)  # Interval adjusted for 4 Hz
 
 plt.tight_layout()
 plt.show()
