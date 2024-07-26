@@ -58,7 +58,6 @@ This program demonstrates the modulation part of the process, showing how digita
 
 """
 
-
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
@@ -103,6 +102,7 @@ for i, (I, Q, A, theta) in enumerate(zip(I_values, Q_values, amplitudes, phases)
 
 # Initialize the figure and subplots
 fig, axs = plt.subplots(3, 1, figsize=(10, 12))
+fig.suptitle('16QAM Animation', fontsize=16)  # Add title to the GUI
 
 def update(frame):
     # Clear only frequency domain and constellation diagram
@@ -133,15 +133,13 @@ def update(frame):
         fig.canvas.flush_events()
         time.sleep(delay_duration)
 
-# The configure_axes and init functions remain the same
-
 def configure_axes():
     # Time Domain Signal
     axs[0].set_title('Time Domain Signal')
     axs[0].set_xlabel('Time (s)')
     axs[0].set_ylabel('Amplitude (Units)')
     axs[0].set_xlim(0, duration)
-    axs[0].set_ylim(-10, 10)
+    axs[0].set_ylim(-5, 5)
     
     # Frequency Domain
     axs[1].set_title('Frequency Domain')
@@ -158,7 +156,6 @@ def configure_axes():
     axs[2].set_ylim(-4, 4)
     axs[2].grid(True)
 
-# Modify the init function to set up the time domain graph
 def init():
     axs[0].clear()
     axs[1].clear()
