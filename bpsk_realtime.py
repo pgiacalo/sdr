@@ -27,8 +27,8 @@ from matplotlib.animation import FuncAnimation
 # Parameters
 f_carrier = 8  # Carrier frequency in Hz
 sample_rate = 1e4  # Sample rate in Hz
-symbol_rate = 4  # Symbol rate in symbols per second
-num_symbols = 40  # Number of symbols to display in the animation
+symbol_rate = 1  # Symbol rate in symbols per second, updating once per second
+num_symbols = 10  # Number of symbols to display in the animation
 duration = num_symbols / symbol_rate  # Duration of the signal in seconds
 
 # Time array
@@ -53,7 +53,7 @@ axs[0].set_xlabel('Time (s)')
 axs[0].set_ylabel('Amplitude')
 axs[0].set_xlim(0, duration)
 axs[0].set_ylim(-1.5, 1.5)
-line1, = axs[0].plot(t, modulated_signal, lw=2)
+line1, = axs[0].plot([], [], lw=2)
 
 # Frequency domain plot
 axs[1].set_title('Frequency Domain')
@@ -90,9 +90,6 @@ def update(frame):
     axs[1].stem(frequencies, np.abs(current_spectrum), linefmt=color+'-', markerfmt=color+'o', basefmt='k-')
     axs[1].set_xlim(-f_carrier * 5, f_carrier * 5)
     axs[1].set_ylim(0, np.max(np.abs(current_spectrum)) + 1)
-    axs[1].set_title('Frequency Domain')
-    axs[1].set_xlabel('Frequency (Hz)')
-    axs[1].set_ylabel('Magnitude')
     
     # Update constellation diagram to show only the latest point
     points.set_data([current_symbol], [0])
@@ -106,7 +103,7 @@ def init():
     return line1, points
 
 # Set up the animation
-ani = FuncAnimation(fig, update, frames=num_symbols, init_func=init, blit=False, interval=250)
+ani = FuncAnimation(fig, update, frames=num_symbols, init_func=init, blit=False, interval=1000)  # Update once per second
 
 plt.tight_layout()
 plt.show()
