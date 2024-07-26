@@ -47,13 +47,23 @@ modulated_signal = modulated_I + modulated_Q
 # Initialize the figure and subplots
 fig, axs = plt.subplots(3, 1, figsize=(10, 12))
 
+# Color cycle for time domain signal
+colors = ['blue', 'red']  # Alternating colors
+
 def update(frame):
+    if frame == 0:
+        for ax in axs:
+            ax.clear()  # Clear all axes at the beginning of each loop
+        # Reconfigure the axes after clearing
+        configure_axes()
+
+    idx_start = frame * samples_per_symbol
     idx_end = (frame + 1) * samples_per_symbol
-    axs[0].plot(t[:idx_end], modulated_signal[:idx_end], 'b')
+    color = colors[frame % 2]  # Alternate colors between blue and red
+    axs[0].plot(t[idx_start:idx_end], modulated_signal[idx_start:idx_end], color=color)
     
     spectrum = np.fft.fft(modulated_signal[:idx_end])
     frequencies = np.fft.fftfreq(idx_end, 1/sample_rate)
-    axs[1].clear()
     axs[1].stem(frequencies, np.abs(spectrum), 'b', basefmt="-b")
     axs[1].set_xlim(-f_carrier * 2, f_carrier * 2)
     axs[1].set_ylim(0, 50)
@@ -67,28 +77,30 @@ def update(frame):
 
     return []
 
-def init():
-    axs[0].clear()
+def configure_axes():
     axs[0].set_title('Time Domain Signal')
     axs[0].set_xlabel('Time (s)')
     axs[0].set_ylabel('Amplitude')
     axs[0].set_xlim(0, duration)
     axs[0].set_ylim(-10, 10)
     
-    axs[1].clear()
     axs[1].set_title('Frequency Domain')
     axs[1].set_xlabel('Frequency (Hz)')
     axs[1].set_ylabel('Magnitude')
     axs[1].set_xlim(-f_carrier * 2, f_carrier * 2)
     axs[1].set_ylim(0, 50)
     
-    axs[2].clear()
     axs[2].set_title('Constellation Diagram')
     axs[2].set_xlabel('In-phase (I)')
     axs[2].set_ylabel('Quadrature (Q)')
     axs[2].set_xlim(-4, 4)
     axs[2].set_ylim(-4, 4)
     axs[2].grid(True)
+
+def init():
+    for ax in axs:
+        ax.clear()  # Clear all axes on init
+    configure_axes()  # Reconfigure after clearing
     return []
 
 # Set up the animation
@@ -97,4 +109,3 @@ ani = FuncAnimation(fig, update, init_func=init, frames=np.arange(len(I_values))
 
 plt.tight_layout()
 plt.show()
-
