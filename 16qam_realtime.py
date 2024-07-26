@@ -1,9 +1,32 @@
 """
 16-QAM IQ Signal Generation and Animation Visualization of Constellation X-Y Graph
 
-16-QAM animation script to generate the 16 IQ values sequentially rather than randomly, and ensure that all 16 points appear on the constellation diagram after 8 seconds, you can update the code as follows. Additionally, I'll include a delay of 4 seconds at the end of each loop before it repeats, which can be handled using a pause or delay mechanism in the animation loop.
+In 16-QAM (Quadrature Amplitude Modulation), the variation in the signal to encode data 
+is achieved by changing both the amplitude and the phase of the carrier wave, and not the frequency. 
 
-Here’s the updated approach:
+Here’s a breakdown of how it works:
+
+Amplitude and Phase Variation: In 16-QAM, each symbol represents 4 bits of data. 
+There are 16 different symbols, each corresponding to a unique combination of amplitude and phase. 
+This method effectively combines both amplitude modulation (AM) and phase modulation (PM).
+
+IQ Components:
+
+I (In-phase) and Q (Quadrature-phase) components determine the overall signal. 
+Each component can take on one of four amplitude levels (for example, -3, -1, 1, 3 in your code). 
+These levels can be seen as the x and y coordinates in a constellation diagram, which represents the phase and amplitude of the signal.
+
+The combination of I and Q for each symbol thus determines the resultant vector's amplitude and angle relative to the carrier wave.
+
+Constellation Diagram: The 16 different states (or symbols) are visually represented in the IQ plane on a constellation diagram. 
+Each point on this diagram corresponds to a specific phase (angle) and amplitude (distance from the origin) configuration.
+
+Carrier Frequency: It remains constant. What changes per symbol is the carrier’s phase and amplitude as influenced by the I and Q values. 
+Changing the carrier frequency is a different modulation scheme called Frequency Shift Keying (FSK).
+
+In summary, 16-QAM modulates the amplitude and phase of the carrier wave to transmit data. 
+Each of the 16 possible combinations of I and Q values alters the carrier in a unique way, allowing it to carry 4 bits of information per symbol. 
+The frequency of the carrier wave does NOT change; instead, it serves as the reference for modulating amplitude and phase.
 
 Approach:
 Sequential IQ Values: Generates all possible combinations for a 16-QAM constellation.
