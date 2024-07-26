@@ -84,22 +84,27 @@ for i, (I, Q, A, theta) in enumerate(zip(I_values, Q_values, amplitudes, phases)
 fig, axs = plt.subplots(3, 1, figsize=(10, 12))
 
 def update(frame):
-    if frame == 0:
-        for ax in axs:
-            ax.clear()
-        configure_axes()
-    idx_start = frame * samples_per_symbol
-    idx_end = (frame + 1) * samples_per_symbol
-    color = ['blue', 'red'][frame % 2]
-    axs[0].plot(t[idx_start:idx_end], modulated_signal[idx_start:idx_end], color=color)
-    
-    spectrum = np.fft.fft(modulated_signal[:idx_end])
-    frequencies = np.fft.fftfreq(idx_end, 1/sample_rate)
+    # Clear only frequency domain and constellation diagram
     axs[1].clear()
+    axs[2].clear()
+    
+    configure_axes()
+    
+    # Time Domain Signal (additive drawing with alternating colors)
+    for i in range(frame + 1):
+        idx_start = i * samples_per_symbol
+        idx_end = (i + 1) * samples_per_symbol
+        color = 'blue' if i % 2 == 0 else 'red'
+        axs[0].plot(t[idx_start:idx_end], modulated_signal[idx_start:idx_end], color=color)
+    
+    # Frequency Domain
+    spectrum = np.fft.fft(modulated_signal[:(frame + 1) * samples_per_symbol])
+    frequencies = np.fft.fftfreq((frame + 1) * samples_per_symbol, 1/sample_rate)
     axs[1].stem(frequencies, np.abs(spectrum), 'b', basefmt="-b")
     axs[1].set_xlim(-f_carrier * 3, f_carrier * 3)
     axs[1].set_ylim(0, np.max(np.abs(spectrum)) * 1.1)
     
+    # Constellation Diagram
     axs[2].scatter(I_values[:frame + 1], Q_values[:frame + 1], color='red')
     
     if frame == len(I_values) - 1:
@@ -107,19 +112,24 @@ def update(frame):
         fig.canvas.flush_events()
         time.sleep(delay_duration)
 
+# The configure_axes and init functions remain the same
+
 def configure_axes():
+    # Time Domain Signal
     axs[0].set_title('Time Domain Signal')
     axs[0].set_xlabel('Time (s)')
     axs[0].set_ylabel('Amplitude (Units)')
     axs[0].set_xlim(0, duration)
     axs[0].set_ylim(-10, 10)
     
+    # Frequency Domain
     axs[1].set_title('Frequency Domain')
     axs[1].set_xlabel('Frequency (Hz)')
     axs[1].set_ylabel('Magnitude (Arbitrary Units)')
     axs[1].set_xlim(-f_carrier * 3, f_carrier * 3)
     axs[1].set_ylim(0, 50)
     
+    # Constellation Diagram
     axs[2].set_title('Constellation Diagram')
     axs[2].set_xlabel('In-phase (I)')
     axs[2].set_ylabel('Quadrature (Q)')
@@ -127,9 +137,11 @@ def configure_axes():
     axs[2].set_ylim(-4, 4)
     axs[2].grid(True)
 
+# Modify the init function to set up the time domain graph
 def init():
-    for ax in axs:
-        ax.clear()
+    axs[0].clear()
+    axs[1].clear()
+    axs[2].clear()
     configure_axes()
     return []
 
