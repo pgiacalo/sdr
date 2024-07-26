@@ -27,16 +27,15 @@ from matplotlib.animation import FuncAnimation
 # Parameters
 f_carrier = 8  # Carrier frequency in Hz
 sample_rate = 1e4  # Sample rate in Hz
-symbol_rate = 4  # Symbol rate in symbols per second, updating four times per second
+symbol_rate = 4  # Symbol rate in symbols per second
 num_symbols = 40  # Number of symbols to display in the animation
 duration = num_symbols / symbol_rate  # Duration of the signal in seconds
 
 # Time array
 t = np.arange(0, duration, 1/sample_rate)
 
-# Generate random BPSK symbols (+1 or -1)
-np.random.seed(0)  # For reproducibility
-symbols = np.random.choice([-1, 1], size=num_symbols)
+# Generate alternating BPSK symbols (+1 or -1)
+symbols = np.array([1 if i % 2 == 0 else -1 for i in range(num_symbols)])
 
 # Repeat each symbol to match the sample rate and symbol rate
 samples_per_symbol = int(sample_rate / symbol_rate)
@@ -60,7 +59,7 @@ line1, = axs[0].plot(t, modulated_signal, lw=2)
 axs[1].set_title('Frequency Domain')
 axs[1].set_xlabel('Frequency (Hz)')
 axs[1].set_ylabel('Magnitude')
-axs[1].set_xlim(-f_carrier * 5, f_carrier * 5)  # Adjust the range to see the carrier peak clearly
+axs[1].set_xlim(-f_carrier * 5, f_carrier * 5)
 
 # Constellation diagram
 axs[2].set_title('Constellation Diagram')
@@ -73,18 +72,22 @@ points, = axs[2].plot([], [], 'ro')
 
 def update(frame):
     current_idx_start = frame * samples_per_symbol
-    current_idx_end = current_idx_start + samples_per_symbol
-    current_modulated_signal = modulated_signal[current_idx_start:current_idx_end]
-    current_time = t[current_idx_start:current_idx_end]
+    current_modulated_signal = modulated_signal[current_idx_start:current_idx_start + samples_per_symbol]
+    current_time = t[current_idx_start:current_idx_start + samples_per_symbol]
+    current_symbol = symbols[frame]
+    
+    # Define color based on current symbol
+    color = 'b' if current_symbol == 1 else 'r'
     
     # Update time domain plot
     line1.set_data(current_time, current_modulated_signal)
+    line1.set_color(color)
     
     # Update frequency domain plot
     current_spectrum = np.fft.fft(current_modulated_signal)
     frequencies = np.fft.fftfreq(len(current_modulated_signal), 1/sample_rate)
     axs[1].clear()
-    axs[1].stem(frequencies, np.abs(current_spectrum), 'b', basefmt="-b")
+    axs[1].stem(frequencies, np.abs(current_spectrum), linefmt=color+'-', markerfmt=color+'o', basefmt='k-')
     axs[1].set_xlim(-f_carrier * 5, f_carrier * 5)
     axs[1].set_ylim(0, np.max(np.abs(current_spectrum)) + 1)
     axs[1].set_title('Frequency Domain')
@@ -92,8 +95,8 @@ def update(frame):
     axs[1].set_ylabel('Magnitude')
     
     # Update constellation diagram to show only the latest point
-    current_symbol = symbols[frame]
     points.set_data([current_symbol], [0])
+    points.set_color(color)
     
     return line1, points
 
