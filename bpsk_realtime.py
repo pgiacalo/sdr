@@ -25,10 +25,10 @@ import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 
 # Parameters
-f_carrier = 8  # Carrier frequency in Hz, changed to 8 Hz
+f_carrier = 8  # Carrier frequency in Hz
 sample_rate = 1e4  # Sample rate in Hz
 symbol_rate = 4  # Symbol rate in symbols per second, updating four times per second
-num_symbols = 40  # Increased number of symbols to fill 10 seconds at 4 symbols/sec
+num_symbols = 40  # Number of symbols to display in the animation
 duration = num_symbols / symbol_rate  # Duration of the signal in seconds
 
 # Time array
@@ -91,8 +91,10 @@ def update(frame):
         axs[1].set_xlabel('Frequency (Hz)')
         axs[1].set_ylabel('Magnitude')
     
-    # Update constellation diagram
-    points.set_data(symbols[:frame+1], np.zeros(frame+1))
+    # Update constellation diagram to show only the latest point
+    current_symbol = symbols[frame] if frame < len(symbols) else symbols[-1]
+    points.set_data([current_symbol], [0])
+    
     return line1, line2, stemlines, baseline, points
 
 def init():
