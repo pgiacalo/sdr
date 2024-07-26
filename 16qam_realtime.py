@@ -64,9 +64,10 @@ def update(frame):
     
     spectrum = np.fft.fft(modulated_signal[:idx_end])
     frequencies = np.fft.fftfreq(idx_end, 1/sample_rate)
+    axs[1].clear()
     axs[1].stem(frequencies, np.abs(spectrum), 'b', basefmt="-b")
-    axs[1].set_xlim(-f_carrier * 2, f_carrier * 2)
-    axs[1].set_ylim(0, 50)
+    axs[1].set_xlim(-f_carrier * 3, f_carrier * 3)  # Extended to 3 times the carrier frequency
+    axs[1].set_ylim(0, np.max(np.abs(spectrum)) * 1.1)  # Adjust the y-axis to 110% of the max value
     
     axs[2].scatter(I_values[:frame + 1], Q_values[:frame + 1], color='red')
     
@@ -87,8 +88,8 @@ def configure_axes():
     axs[1].set_title('Frequency Domain')
     axs[1].set_xlabel('Frequency (Hz)')
     axs[1].set_ylabel('Magnitude')
-    axs[1].set_xlim(-f_carrier * 2, f_carrier * 2)
-    axs[1].set_ylim(0, 50)
+    axs[1].set_xlim(-f_carrier * 3, f_carrier * 3)  # Same extension as in update
+    axs[1].set_ylim(0, 50)  # Set a default y-axis limit
     
     axs[2].set_title('Constellation Diagram')
     axs[2].set_xlabel('In-phase (I)')
