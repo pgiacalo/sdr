@@ -14,16 +14,17 @@
 # Plot the Frequency Domain: Analyze the spectrum of the 16-QAM signal.
 # Plot the Constellation Diagram: Visualize the 16 points in the IQ plane.
 
+
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 
 # Parameters
-f_carrier = 20  # Updated carrier frequency to 20 Hz
-sample_rate = 1000  # Adjusted sample rate for easier visualization
-num_symbols = 10  # Number of symbols to display
-symbol_rate = 1   # Symbol rate in symbols per second, updating once per second
-duration = num_symbols / symbol_rate  # Total duration of the signal
+f_carrier = 20  # Carrier frequency in Hz
+sample_rate = 1000  # Sample rate for easier visualization
+num_symbols = 16  # Total symbols (2 per second for 8 seconds)
+symbol_rate = 2   # Symbol rate in symbols per second (updates twice per second)
+duration = 8  # Duration of the signal in seconds
 
 # Time array
 t = np.arange(0, duration, 1/sample_rate)
@@ -46,7 +47,7 @@ modulated_signal = modulated_I + modulated_Q
 # Initialize the figure and subplots
 fig, axs = plt.subplots(3, 1, figsize=(10, 12))
 
-# Configure Time Domain Plot
+# Configure plots for initial state
 axs[0].set_title('Time Domain Signal')
 axs[0].set_xlabel('Time (s)')
 axs[0].set_ylabel('Amplitude')
@@ -54,14 +55,12 @@ axs[0].set_xlim(0, duration)
 axs[0].set_ylim(-10, 10)
 line1, = axs[0].plot([], [], 'b')
 
-# Configure Frequency Domain Plot
 axs[1].set_title('Frequency Domain')
 axs[1].set_xlabel('Frequency (Hz)')
 axs[1].set_ylabel('Magnitude')
 axs[1].set_xlim(-f_carrier * 2, f_carrier * 2)
 axs[1].set_ylim(0, 50)
 
-# Configure Constellation Diagram
 axs[2].set_title('Constellation Diagram')
 axs[2].set_xlabel('In-phase (I)')
 axs[2].set_ylabel('Quadrature (Q)')
@@ -71,29 +70,39 @@ axs[2].grid(True)
 points, = axs[2].plot([], [], 'ro')
 
 def update(frame):
-    idx_end = (frame + 1) * samples_per_symbol
-    # Update Time Domain Plot
+    idx = frame % num_symbols  # Loop the frame index cyclically
+    idx_end = (idx + 1) * samples_per_symbol
+    # Time Domain Update
     line1.set_data(t[:idx_end], modulated_signal[:idx_end])
     
-    # Update Frequency Domain Plot
+    # Frequency Domain Update
     spectrum = np.fft.fft(modulated_signal[:idx_end])
     frequencies = np.fft.fftfreq(idx_end, 1/sample_rate)
     axs[1].clear()
     axs[1].stem(frequencies, np.abs(spectrum), 'b', basefmt="-b")
+    axs[1].set_title('Frequency Domain')
+    axs[1].set_xlabel('Frequency (Hz)')
+    axs[1].set_ylabel('Magnitude')
     axs[1].set_xlim(-f_carrier * 2, f_carrier * 2)
     axs[1].set_ylim(0, 50)
     
-    # Update Constellation Diagram
-    points.set_data(I_values[:frame+1], Q_values[:frame+1])
+    # Constellation Diagram Update
+    points.set_data(I_values[:idx+1], Q_values[:idx+1])
+    
     return line1, points
 
 def init():
     line1.set_data([], [])
     points.set_data([], [])
+    axs[1].clear()
+    axs[1].stem([0], [0], 'b', basefmt="-b")  # Reset frequency plot
+    axs[1].set_xlim(-f_carrier * 2, f_carrier * 2)
+    axs[1].set_ylim(0, 50)
     return line1, points
 
 # Set up the animation
-ani = FuncAnimation(fig, update, frames=num_symbols, init_func=init, blit=True, interval=1000)  # 1000 ms interval for once per second
+ani = FuncAnimation(fig, update, init_func=init, frames=np.arange(num_symbols * int(duration / symbol_rate)), 
+                    blit=False, interval=500, repeat=True)
 
 plt.tight_layout()
 plt.show()
