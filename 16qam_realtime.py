@@ -67,52 +67,56 @@ modulated_I = I_signal * np.cos(2 * np.pi * f_carrier * t)
 modulated_Q = Q_signal * np.sin(2 * np.pi * f_carrier * t)
 modulated_signal = modulated_I + modulated_Q
 
+# Calculate amplitude and phase for each IQ pair
+amplitudes = np.sqrt(I_values**2 + Q_values**2)
+phases = np.arctan2(Q_values, I_values)  # arctan2 handles all quadrants
+
+# Print carrier frequency and each symbol's amplitude and phase
+print(f"Carrier Frequency: {f_carrier} Hz")
+print("Amplitude and Phase for each Symbol:")
+for i, (I, Q, A, theta) in enumerate(zip(I_values, Q_values, amplitudes, phases)):
+    print(f"Symbol {i+1}: I = {I}, Q = {Q}, Amplitude = {A:.2f}, Phase = {np.degrees(theta):.2f} degrees")
+
 # Initialize the figure and subplots
 fig, axs = plt.subplots(3, 1, figsize=(10, 12))
-
-# Color cycle for time domain signal
-colors = ['blue', 'red']  # Alternating colors
 
 def update(frame):
     if frame == 0:
         for ax in axs:
-            ax.clear()  # Clear all axes at the beginning of each loop
-        # Reconfigure the axes after clearing
+            ax.clear()
         configure_axes()
 
     idx_start = frame * samples_per_symbol
     idx_end = (frame + 1) * samples_per_symbol
-    color = colors[frame % 2]  # Alternate colors between blue and red
+    color = ['blue', 'red'][frame % 2]
     axs[0].plot(t[idx_start:idx_end], modulated_signal[idx_start:idx_end], color=color)
     
     spectrum = np.fft.fft(modulated_signal[:idx_end])
     frequencies = np.fft.fftfreq(idx_end, 1/sample_rate)
     axs[1].clear()
     axs[1].stem(frequencies, np.abs(spectrum), 'b', basefmt="-b")
-    axs[1].set_xlim(-f_carrier * 3, f_carrier * 3)  # Extended to 3 times the carrier frequency
-    axs[1].set_ylim(0, np.max(np.abs(spectrum)) * 1.1)  # Adjust the y-axis to 110% of the max value
+    axs[1].set_xlim(-f_carrier * 3, f_carrier * 3)
+    axs[1].set_ylim(0, np.max(np.abs(spectrum)) * 1.1)
     
     axs[2].scatter(I_values[:frame + 1], Q_values[:frame + 1], color='red')
     
-    if frame == len(I_values) - 1:  # Check if it's the last point
-        fig.canvas.draw()  # Force drawing the updates
-        fig.canvas.flush_events()  # Ensure all events are processed
-        time.sleep(delay_duration)  # Delay before repeating loop
-
-    return []
+    if frame == len(I_values) - 1:
+        fig.canvas.draw()
+        fig.canvas.flush_events()
+        time.sleep(delay_duration)
 
 def configure_axes():
     axs[0].set_title('Time Domain Signal')
     axs[0].set_xlabel('Time (s)')
-    axs[0].set_ylabel('Amplitude')
+    axs[0].set_ylabel('Amplitude (Units)')
     axs[0].set_xlim(0, duration)
     axs[0].set_ylim(-10, 10)
     
     axs[1].set_title('Frequency Domain')
     axs[1].set_xlabel('Frequency (Hz)')
-    axs[1].set_ylabel('Magnitude')
-    axs[1].set_xlim(-f_carrier * 3, f_carrier * 3)  # Same extension as in update
-    axs[1].set_ylim(0, 50)  # Set a default y-axis limit
+    axs[1].set_ylabel('Magnitude (Arbitrary Units)')
+    axs[1].set_xlim(-f_carrier * 3, f_carrier * 3)
+    axs[1].set_ylim(0, 50)
     
     axs[2].set_title('Constellation Diagram')
     axs[2].set_xlabel('In-phase (I)')
@@ -123,13 +127,11 @@ def configure_axes():
 
 def init():
     for ax in axs:
-        ax.clear()  # Clear all axes on init
-    configure_axes()  # Reconfigure after clearing
+        ax.clear()
+    configure_axes()
     return []
 
-# Set up the animation
-ani = FuncAnimation(fig, update, init_func=init, frames=np.arange(len(I_values)), 
-                    blit=False, interval=500, repeat=True)
+ani = FuncAnimation(fig, update, init_func=init, frames=np.arange(len(I_values)), blit=False, interval=500, repeat=True)
 
-plt.tight_layout()
+plt.tight_layout(rect=[0, 0, 1, 0.94])
 plt.show()
