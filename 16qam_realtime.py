@@ -1,42 +1,63 @@
 """
-16-QAM IQ Signal Generation and Animation Visualization of Constellation X-Y Graph
+16-QAM IQ Signal Generation and Animation (Visualization of waveforms, frequencies, and constellation graphs)
 
-In 16-QAM (Quadrature Amplitude Modulation), the variation in the signal to encode data 
-is achieved by changing both the amplitude and the phase of the carrier wave, and not the frequency. 
+Let's break down how the quadrature signal is created in this program and how the 16 values can be used to encode data.
 
-Here’s a breakdown of how it works:
+Quadrature Signal Creation:
 
-Amplitude and Phase Variation: In 16-QAM, each symbol represents 4 bits of data. 
-There are 16 different symbols, each corresponding to a unique combination of amplitude and phase. 
-This method effectively combines both amplitude modulation (AM) and phase modulation (PM).
+The quadrature signal in this program is created using Quadrature Amplitude Modulation (QAM), specifically 16-QAM. Here's how it works:
+a) Symbol Generation:
 
-IQ Components:
+I_values = np.tile([-3, -1, 1, 3], 4)
+Q_values = np.repeat([-3, -1, 1, 3], 4)
 
-I (In-phase) and Q (Quadrature-phase) components determine the overall signal. 
-Each component can take on one of four amplitude levels (for example, -3, -1, 1, 3 in your code). 
-These levels can be seen as the x and y coordinates in a constellation diagram, which represents the phase and amplitude of the signal.
+These lines create 16 unique combinations of In-phase (I) and Quadrature (Q) values, representing the 16 symbols in 16-QAM.
 
-The combination of I and Q for each symbol thus determines the resultant vector's amplitude and angle relative to the carrier wave.
+b) Signal Modulation:
+python
+modulated_I = I_signal * np.cos(2 * np.pi * f_carrier * t)
+modulated_Q = Q_signal * np.sin(2 * np.pi * f_carrier * t)
+modulated_signal = modulated_I + modulated_Q
 
-Constellation Diagram: The 16 different states (or symbols) are visually represented in the IQ plane on a constellation diagram. 
-Each point on this diagram corresponds to a specific phase (angle) and amplitude (distance from the origin) configuration.
+Here, the I and Q values are modulated onto cosine and sine carrier waves, respectively. The sum of these two orthogonal signals creates the final modulated signal.
 
-Carrier Frequency: It remains constant. What changes per symbol is the carrier’s phase and amplitude as influenced by the I and Q values. 
-Changing the carrier frequency is a different modulation scheme called Frequency Shift Keying (FSK).
+Encoding Data with 16 Values:
 
-In summary, 16-QAM modulates the amplitude and phase of the carrier wave to transmit data. 
-Each of the 16 possible combinations of I and Q values alters the carrier in a unique way, allowing it to carry 4 bits of information per symbol. 
-The frequency of the carrier wave does NOT change; instead, it serves as the reference for modulating amplitude and phase.
+In 16-QAM, each symbol (combination of I and Q) can represent 4 bits of data. Here's how:
 
-Approach:
-Sequential IQ Values: Generates all possible combinations for a 16-QAM constellation.
-End-of-Loop Delay: Incorporates a delay at the end of each cycle using time.sleep, which pauses the program. 
-	Note: Using time.sleep in the animation update might block the GUI thread, making the interface unresponsive. 
-	If that's an issue, consider alternative timing methods like a countdown or using additional callbacks to manage delays.
-Initialization and Update Functions: Appropriately manage plot clearing and data updating for clear visualization.
-This setup ensures that you can clearly see each of the 16 different states on the constellation diagram, 
-with each state changing every half second, and the animation pausing for 4 seconds at the end of each cycle before repeating.
+a) Bit to Symbol Mapping:
+
+Each of the 16 unique I-Q combinations represents a 4-bit sequence.
+For example:
+(-3, -3) might represent 0000
+(-3, -1) might represent 0001
+(3, 3) might represent 1111
+And so on for all 16 combinations
+
+b) Data Capacity:
+
+With 16 symbols, we can encode 4 bits per symbol (log₂(16) = 4).
+In this program, we're transmitting 2 symbols per second (symbol_rate = 2).
+This means we can transmit 8 bits (1 byte) of data per second.
+
+c) Encoding Process:
+
+Take a stream of binary data.
+Group the data into 4-bit chunks.
+Map each 4-bit chunk to its corresponding I-Q value.
+Modulate these I-Q values as described earlier.
+
+d) Decoding Process (not implemented in this code):
+
+Demodulate the received signal to extract I-Q values.
+Map each I-Q value back to its corresponding 4-bit sequence.
+Concatenate these bit sequences to recover the original data.
+
+The advantage of 16-QAM is that it allows for higher data rates compared to simpler modulation schemes like QPSK (which only has 4 symbols), at the cost of being more susceptible to noise and requiring more complex hardware.
+This program demonstrates the modulation part of the process, showing how digital data (represented by the 16 I-Q combinations) can be converted into an analog signal for transmission. In a real-world application, you would add error correction, synchronization, and other features to make the communication more robust.
+
 """
+
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -151,3 +172,5 @@ ani = FuncAnimation(fig, update, init_func=init, frames=np.arange(len(I_values))
 plt.tight_layout(rect=[0, 0.03, 1, 0.95], h_pad=subplot_spacing)
 
 plt.show()
+
+
