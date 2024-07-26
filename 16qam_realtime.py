@@ -50,6 +50,9 @@ symbol_rate = 2  # 2 symbols per second
 duration = 8  # Duration of the signal in seconds
 delay_duration = 4  # Delay of 4 seconds at the end of each loop
 
+# Add variable to control white space
+subplot_spacing = 8.0  # Adjust this value to increase/decrease spacing
+
 # Generate all 16 QAM points sequentially (4x4 grid)
 I_values = np.tile([-3, -1, 1, 3], 4)
 Q_values = np.repeat([-3, -1, 1, 3], 4)
@@ -85,7 +88,6 @@ def update(frame):
         for ax in axs:
             ax.clear()
         configure_axes()
-
     idx_start = frame * samples_per_symbol
     idx_end = (frame + 1) * samples_per_symbol
     color = ['blue', 'red'][frame % 2]
@@ -133,5 +135,7 @@ def init():
 
 ani = FuncAnimation(fig, update, init_func=init, frames=np.arange(len(I_values)), blit=False, interval=500, repeat=True)
 
-plt.tight_layout(rect=[0, 0, 1, 0.94])
+# Adjust the layout with increased spacing
+plt.tight_layout(rect=[0, 0.03, 1, 0.95], h_pad=subplot_spacing)
+
 plt.show()
