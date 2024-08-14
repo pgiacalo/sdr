@@ -11,14 +11,16 @@ decimal_values = list(range(16))
 
 # Prompt user for the carrier frequency and noise inclusion
 carrier_frequency = float(input("Enter the carrier frequency (Hz): "))
-include_noise = input("Include noise in the animation? (yes/no): ").strip().lower() == 'yes'
+
+# Updated prompt handling for noise inclusion
+include_noise = input("Include noise in the animation? (yes/no): ").strip().lower() in ['y', 'yes']
 
 # Set up the figure and the axis
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 8))
 
 # Draw the initial constellation diagram on the left subplot (ax1)
 scatter = ax1.scatter(I_values_new, Q_values_new, c='blue')
-highlighted_point = ax1.scatter([], [], c='red')  # Highlighted point placeholder, bright red
+highlighted_point = ax1.scatter([], [], c='red', zorder=5)  # Bring the red dot to the front with a high zorder
 selected_point = None  # To keep track of the selected point
 
 # Annotate each point with its decimal value
@@ -31,14 +33,14 @@ for i, (x, y) in enumerate(zip(I_values_new, Q_values_new)):
 # Draw and label amplitude circles
 circle_radii = [np.sqrt(2), np.sqrt(10), np.sqrt(18)]
 for radius in circle_radii:
-    circle = plt.Circle((0, 0), radius, fill=False, color='gray', linestyle='--')
+    circle = plt.Circle((0, 0), radius, fill=False, color='gray', linestyle='--', zorder=1)
     ax1.add_artist(circle)
     if radius == np.sqrt(18):
-        ax1.text(0, radius, '√18', fontsize=10, ha='center', va='bottom', color='black')
+        ax1.text(0, radius, '√18', fontsize=10, ha='center', va='bottom', color='black', zorder=2)
     elif radius == np.sqrt(10):
-        ax1.text(0, radius, '√10', fontsize=10, ha='center', va='bottom', color='black')
+        ax1.text(0, radius, '√10', fontsize=10, ha='center', va='bottom', color='black', zorder=2)
     elif radius == np.sqrt(2):
-        ax1.text(0, radius, '√2', fontsize=10, ha='center', va='bottom', color='black')
+        ax1.text(0, radius, '√2', fontsize=10, ha='center', va='bottom', color='black', zorder=2)
 
 # Draw radial lines for the phase angles through each point
 max_radius = np.sqrt(18)
