@@ -104,17 +104,19 @@ def update(frame):
         
         # Update the waveform plot
         line.set_data(t, waveform)
-        
-        # Clear previous text annotations
-        for text in ax2.texts:
-            text.remove()
 
         # Update the note with the phase angle before noise is applied
         note_text = (f'Carrier Frequency: {carrier_frequency} Hz\n'
                      f'Phase Angle (before noise): {current_phase_angle_deg:.2f}°')
-        ax2.text(0.95, 0.95, note_text, transform=ax2.transAxes,
-                 fontsize=12, verticalalignment='top', horizontalalignment='right',
-                 bbox=dict(facecolor='white', alpha=0.5))
+        if len(ax2.texts) > 0:
+            ax2.texts[0].set_text(note_text)
+        else:
+            ax2.text(0.95, 0.95, note_text, transform=ax2.transAxes,
+                     fontsize=12, verticalalignment='top', horizontalalignment='right',
+                     bbox=dict(facecolor='white', alpha=0.5))
+        
+        # Update the title of the waveform plot
+        ax2.set_title(f'Waveform for Constellation Point ({current_I},{current_Q})')
         
     return line, highlighted_point
 
@@ -148,14 +150,22 @@ def on_click(event):
             else:
                 annotation.set_bbox(dict(facecolor='blue', alpha=0.5))
 
-        # Update the title of the waveform plot
+        # Update the title and note immediately after clicking
         ax2.set_title(f'Waveform for Constellation Point ({current_I},{current_Q})')
+        note_text = (f'Carrier Frequency: {carrier_frequency} Hz\n'
+                     f'Phase Angle (before noise): {current_phase_angle_deg:.2f}°')
+        if len(ax2.texts) > 0:
+            ax2.texts[0].set_text(note_text)
+        else:
+            ax2.text(0.95, 0.95, note_text, transform=ax2.transAxes,
+                     fontsize=12, verticalalignment='top', horizontalalignment='right',
+                     bbox=dict(facecolor='white', alpha=0.5))
 
 # Connect the click event to the on_click function
 fig.canvas.mpl_connect('button_press_event', on_click)
 
 # Create the animation
-ani = animation.FuncAnimation(fig, update, frames=range(100), blit=True, interval=1000, repeat=False)
+ani = animation.FuncAnimation(fig, update, frames=range(100), interval=1000, repeat=False)
 
 plt.tight_layout()
 plt.show()
