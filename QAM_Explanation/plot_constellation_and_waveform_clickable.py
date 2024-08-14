@@ -166,8 +166,8 @@ def on_click(event):
 # Connect the click event to the on_click function
 fig.canvas.mpl_connect('button_press_event', on_click)
 
-# Create the animation
-ani = animation.FuncAnimation(fig, update, frames=range(100), interval=1000, repeat=False)
+# Create the animation to run indefinitely
+ani = animation.FuncAnimation(fig, update, frames=lambda: iter(int, 1), interval=1000, repeat=False)
 
 plt.tight_layout()
 plt.show()
