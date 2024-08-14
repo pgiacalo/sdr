@@ -68,15 +68,21 @@ if (x_input in I_values_new and y_input in Q_values_new):
     ax2.set_xlabel('Time (s)')
     ax2.set_ylabel('Amplitude')
     
-    # Mark the amplitude axis at sqrt(2), sqrt(10), and sqrt(18)
-    ax2.axhline(np.sqrt(2), color='red', linestyle='--', label='√2')
-    ax2.axhline(np.sqrt(10), color='green', linestyle='--', label='√10')
-    ax2.axhline(np.sqrt(18), color='blue', linestyle='--', label='√18')
-    ax2.axhline(-np.sqrt(2), color='red', linestyle='--')
-    ax2.axhline(-np.sqrt(10), color='green', linestyle='--')
-    ax2.axhline(-np.sqrt(18), color='blue', linestyle='--')
-    ax2.legend()
-
+    # Add tick marks and labels for sqrt(2), sqrt(10), sqrt(18), and their negatives
+    y_ticks = [-np.sqrt(18), -np.sqrt(10), -np.sqrt(2), 0, np.sqrt(2), np.sqrt(10), np.sqrt(18)]
+    y_tick_labels = ['-√18', '-√10', '-√2', '0', '√2', '√10', '√18']
+    ax2.set_yticks(y_ticks)
+    ax2.set_yticklabels(y_tick_labels)
+    
+    # Draw light gray dashed lines for these tick marks
+    ax2.axhline(np.sqrt(2), color='lightgray', linestyle='--')
+    ax2.axhline(np.sqrt(10), color='lightgray', linestyle='--')
+    ax2.axhline(np.sqrt(18), color='lightgray', linestyle='--')
+    ax2.axhline(-np.sqrt(2), color='lightgray', linestyle='--')
+    ax2.axhline(-np.sqrt(10), color='lightgray', linestyle='--')
+    ax2.axhline(-np.sqrt(18), color='lightgray', linestyle='--')
+    ax2.axhline(0, color='black', linestyle='-', linewidth=1)
+    
     # Add a note with the carrier frequency, amplitude, and phase angle
     note_text = (f'Carrier Frequency: {carrier_frequency} Hz\n'
                  f'Amplitude: {amplitude_sqrt}\n'
