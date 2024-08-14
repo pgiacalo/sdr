@@ -19,11 +19,12 @@ fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 8))
 
 # Draw the initial constellation diagram on the left subplot (ax1)
 scatter = ax1.scatter(I_values_new, Q_values_new, c='blue')
-highlighted_point = ax1.scatter([], [], c='green')  # Highlighted point placeholder
+highlighted_point = ax1.scatter([], [], c='red')  # Highlighted point placeholder, bright red
 
-# Annotate each point with its decimal value
+# Annotate each point with its decimal value with the original blue squares
 for i, (x, y) in enumerate(zip(I_values_new, Q_values_new)):
-    ax1.text(x, y, str(decimal_values[i]), fontsize=12, ha='center', va='center', color='white', bbox=dict(facecolor='blue', alpha=0.5))
+    ax1.text(x, y, str(decimal_values[i]), fontsize=12, ha='center', va='center', color='white',
+             bbox=dict(facecolor='blue', alpha=0.5))  # Set alpha back to 0.5 for more opacity
 
 # Draw and label amplitude circles
 circle_radii = [np.sqrt(2), np.sqrt(10), np.sqrt(18)]
@@ -36,6 +37,15 @@ for radius in circle_radii:
         ax1.text(0, radius, '√10', fontsize=10, ha='center', va='bottom', color='black')
     elif radius == np.sqrt(2):
         ax1.text(0, radius, '√2', fontsize=10, ha='center', va='bottom', color='black')
+
+# Draw radial lines for the phase angles through each point
+max_radius = np.sqrt(18)
+angles = np.arctan2(Q_values_new, I_values_new)
+unique_angles = np.unique(angles)
+for angle in unique_angles:
+    x = [0, max_radius * np.cos(angle)]
+    y = [0, max_radius * np.sin(angle)]
+    ax1.plot(x, y, color='gray', linestyle='--', linewidth=1, zorder=1)
 
 # Adjust title placement and axis limits
 ax1.set_title('16-QAM Constellation Diagram', fontsize=16, y=1.05)
