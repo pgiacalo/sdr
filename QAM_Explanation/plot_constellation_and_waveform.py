@@ -14,6 +14,12 @@ carrier_frequency = float(input("Enter the carrier frequency (Hz): "))
 x_input, y_input = map(int, input("Enter the constellation point as x,y (e.g., 3,-1): ").split(','))
 include_noise = input("Include noise in the animation? (yes/no): ").strip().lower() == 'yes'
 
+# Calculate the initial phase angle (before noise)
+phase_angle = np.arctan2(y_input, x_input)
+phase_angle_deg = np.degrees(phase_angle)
+if phase_angle_deg < 0:
+    phase_angle_deg += 360
+
 # Set up the figure and the axis
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 8))
 
@@ -21,10 +27,11 @@ fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 8))
 scatter = ax1.scatter(I_values_new, Q_values_new, c='blue')
 highlighted_point = ax1.scatter([], [], c='red')  # Highlighted point placeholder, bright red
 
-# Annotate each point with its decimal value with the original blue squares
+# Annotate each point with its decimal value, and highlight the chosen point in green
 for i, (x, y) in enumerate(zip(I_values_new, Q_values_new)):
+    color = 'green' if (x == x_input and y == y_input) else 'blue'
     ax1.text(x, y, str(decimal_values[i]), fontsize=12, ha='center', va='center', color='white',
-             bbox=dict(facecolor='blue', alpha=0.5))  # Set alpha back to 0.5 for more opacity
+             bbox=dict(facecolor=color, alpha=0.5))  # Green box for the selected point
 
 # Draw and label amplitude circles
 circle_radii = [np.sqrt(2), np.sqrt(10), np.sqrt(18)]
@@ -78,12 +85,6 @@ ax2.set_yticklabels(y_tick_labels)
 for y in y_ticks:
     ax2.axhline(y, color='lightgray', linestyle='--')
 
-# Ensure phase angle is positive
-phase_angle = np.arctan2(y_input, x_input)
-phase_angle_deg = np.degrees(phase_angle)
-if phase_angle_deg < 0:
-    phase_angle_deg += 360
-
 # Generate time array
 t = np.linspace(0, 1, 1000)  # 1 second of time
 
@@ -113,9 +114,9 @@ def update(frame):
     for text in ax2.texts:
         text.remove()
 
-    # Update the note with the current noisy phase angle
+    # Update the note with the phase angle before noise is applied
     note_text = (f'Carrier Frequency: {carrier_frequency} Hz\n'
-                 f'Phase Angle: {phase_angle_deg_noisy:.2f}°')
+                 f'Phase Angle (before noise): {phase_angle_deg:.2f}°')
     ax2.text(0.95, 0.95, note_text, transform=ax2.transAxes,
              fontsize=12, verticalalignment='top', horizontalalignment='right',
              bbox=dict(facecolor='white', alpha=0.5))
