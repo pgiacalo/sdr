@@ -8,18 +8,21 @@ Q_values_new = [-3, -3, -3, -3, -1, -1, -1, -1,  1,  1,  1,  1,  3,  3, 3,  3]
 # Decimal values from 0 to 15
 decimal_values = list(range(16))
 
+# Prompt user for the carrier frequency and constellation point
+carrier_frequency = float(input("Enter the carrier frequency (Hz): "))
+x_input, y_input = map(int, input("Enter the constellation point as x,y (e.g., 3,-1): ").split(','))
+
 # Create a figure with two subplots side by side
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 8))
 
 # Plot the 16-QAM constellation diagram on the left subplot (ax1)
-ax1.scatter(I_values_new, Q_values_new, c='blue')
-
-# Annotate each point with its decimal value
 for i, (x, y) in enumerate(zip(I_values_new, Q_values_new)):
-    ax1.text(x, y, str(decimal_values[i]), fontsize=12, ha='center', va='center', color='white', bbox=dict(facecolor='blue', alpha=0.5))
+    color = 'green' if (x == x_input and y == y_input) else 'blue'
+    ax1.scatter(x, y, c=color)
+    ax1.text(x, y, str(decimal_values[i]), fontsize=12, ha='center', va='center', color='white', bbox=dict(facecolor=color, alpha=0.5))
 
 # Draw and label amplitude circles
-circle_radii = [np.sqrt(2), np.sqrt(10), np.sqrt(18)]  # Correctly use sqrt(18)
+circle_radii = [np.sqrt(2), np.sqrt(10), np.sqrt(18)]
 for radius in circle_radii:
     circle = plt.Circle((0, 0), radius, fill=False, color='gray', linestyle='--')
     ax1.add_artist(circle)
@@ -41,26 +44,20 @@ ax1.axhline(0, color='black', linewidth=0.5)
 ax1.axvline(0, color='black', linewidth=0.5)
 ax1.set_aspect('equal', adjustable='box')
 
-# Prompt user for the carrier frequency and constellation point
-carrier_frequency = float(input("Enter the carrier frequency (Hz): "))
-x_input, y_input = map(int, input("Enter the constellation point as x,y (e.g., 3,-1): ").split(','))
-
 # Find the phase angle corresponding to the point
 if (x_input in I_values_new and y_input in Q_values_new):
     phase_angle = np.arctan2(y_input, x_input)
+    
+    # Ensure phase angle is positive
+    phase_angle_deg = np.degrees(phase_angle)
+    if phase_angle_deg < 0:
+        phase_angle_deg += 360
     
     # Generate the waveform corresponding to the phase angle
     t = np.linspace(0, 1, 1000)  # 1 second of time
     amplitude = np.sqrt(x_input**2 + y_input**2)
     
-    # Format amplitude as a square root if it matches certain values
-    amplitude_squared = int(amplitude**2)
-    if amplitude_squared in [2, 10, 18]:
-        amplitude_sqrt = f'√{amplitude_squared}'
-    else:
-        amplitude_sqrt = f'{amplitude:.2f}'
-    
-    waveform = amplitude * np.cos(2 * np.pi * carrier_frequency * t + phase_angle)
+    waveform = amplitude * np.cos(2 * np.pi * carrier_frequency * t + np.radians(phase_angle_deg))
     
     # Plot the waveform on the right subplot (ax2)
     ax2.plot(t, waveform)
@@ -83,10 +80,9 @@ if (x_input in I_values_new and y_input in Q_values_new):
     ax2.axhline(-np.sqrt(18), color='lightgray', linestyle='--')
     ax2.axhline(0, color='black', linestyle='-', linewidth=1)
     
-    # Add a note with the carrier frequency, amplitude, and phase angle
+    # Add a note with the carrier frequency and phase angle
     note_text = (f'Carrier Frequency: {carrier_frequency} Hz\n'
-                 f'Amplitude: {amplitude_sqrt}\n'
-                 f'Phase Angle: {np.degrees(phase_angle):.2f}°')
+                 f'Phase Angle: {phase_angle_deg:.2f}°')
     ax2.text(0.95, 0.95, note_text, transform=ax2.transAxes,
              fontsize=12, verticalalignment='top', horizontalalignment='right',
              bbox=dict(facecolor='white', alpha=0.5))
