@@ -6,8 +6,8 @@ from matplotlib.colors import hsv_to_rgb
 from matplotlib.widgets import Button
 
 # Parameters
-F_LO = 20  # Local Oscillator frequency in Hz (formerly f_carrier)
-F_BB = 2   # Baseband frequency (symbol rate) in Hz
+F_LO = 20  # Local Oscillator frequency in Hz (the carrier frequency)
+F_BB = 2   # Baseband frequency (the symbol rate) in Hz
 sample_rate = 1000  # Sample rate for easier visualization
 duration = 8  # Duration of the signal in seconds
 delay_duration = 4  # Delay of 4 seconds at the end of each loop
