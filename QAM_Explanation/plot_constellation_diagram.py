@@ -1,5 +1,9 @@
 '''
 Code that plots the 16-QAM Constellation Diagram with labels for the 3 Amplitude circles
+
+Symbol Map = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+Constellation Points = [-3.0-3.0j, -1.0-3.0j, 1.0-3.0j, 3.0-3.0j, -3.0-1.0j, -1.0-1.0j, 1.0-1.0j, 3.0-1.0j, -3.0+1.0j, -1.0+1.0j, 1.0+1.0j, 3.0+1.0j, -3.0+3.0j, -1.0+3.0j, 1.0+3.0j, 3.0+3.0j]
+
 '''
 
 import numpy as np

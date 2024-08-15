@@ -9,6 +9,9 @@ Q_values_new = [-3, -3, -3, -3, -1, -1, -1, -1,  1,  1,  1,  1,  3,  3, 3,  3]
 # Decimal values from 0 to 15
 decimal_values = list(range(16))
 
+# Convert decimal values to binary strings (4 bits)
+binary_values = [f'{val:04b}' for val in decimal_values]
+
 # Prompt user for the carrier frequency and noise inclusion
 carrier_frequency = float(input("Enter the carrier frequency (Hz): "))
 
@@ -23,12 +26,16 @@ scatter = ax1.scatter(I_values_new, Q_values_new, c='blue')
 highlighted_point = ax1.scatter([], [], c='red', zorder=5)  # Bring the red dot to the front with a high zorder
 selected_point = None  # To keep track of the selected point
 
-# Annotate each point with its decimal value
+# Annotate each point with its decimal value and binary pattern
 annotations = []
 for i, (x, y) in enumerate(zip(I_values_new, Q_values_new)):
+    # Decimal value annotation
     annotation = ax1.text(x, y, str(decimal_values[i]), fontsize=12, ha='center', va='center', color='white',
                           bbox=dict(facecolor='blue', alpha=0.5))  # Blue box for each point
     annotations.append(annotation)
+    
+    # Binary pattern annotation (displayed just below the decimal value)
+    ax1.text(x, y - 0.5, binary_values[i], fontsize=10, ha='center', va='center', color='black')
 
 # Draw and label amplitude circles
 circle_radii = [np.sqrt(2), np.sqrt(10), np.sqrt(18)]
