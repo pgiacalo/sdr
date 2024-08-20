@@ -25,8 +25,6 @@ from gnuradio.eng_arg import eng_float, intx
 from gnuradio import eng_notation
 from gnuradio import vocoder
 from gnuradio.vocoder import codec2
-import osmosdr
-import time
 import sip
 
 
@@ -68,8 +66,8 @@ class QAM16_Transmitter(gr.top_block, Qt.QWidget):
         ##################################################
         self.scale = scale = 8192
         self.samp_rate = samp_rate = 10000000
-        self.constellation_object = constellation_object = digital.constellation_16qam().base()
-        self.constellation_object.set_npwr(1.0)
+        self.Constellation16QAM = Constellation16QAM = digital.constellation_16qam().base()
+        self.Constellation16QAM.set_npwr(1.0)
 
         ##################################################
         # Blocks
@@ -82,17 +80,17 @@ class QAM16_Transmitter(gr.top_block, Qt.QWidget):
                 taps=[],
                 fractional_bw=0)
         self.qtgui_const_sink_x_0 = qtgui.const_sink_c(
-            100, #size
+            16, #size
             "", #name
             1, #number of inputs
             None # parent
         )
         self.qtgui_const_sink_x_0.set_update_time(0.10)
-        self.qtgui_const_sink_x_0.set_y_axis((-2), 2)
-        self.qtgui_const_sink_x_0.set_x_axis((-2), 2)
+        self.qtgui_const_sink_x_0.set_y_axis((-4), 4)
+        self.qtgui_const_sink_x_0.set_x_axis((-4), 4)
         self.qtgui_const_sink_x_0.set_trigger_mode(qtgui.TRIG_MODE_FREE, qtgui.TRIG_SLOPE_POS, 0.0, 0, "")
-        self.qtgui_const_sink_x_0.enable_autoscale(True)
-        self.qtgui_const_sink_x_0.enable_grid(False)
+        self.qtgui_const_sink_x_0.enable_autoscale(False)
+        self.qtgui_const_sink_x_0.enable_grid(True)
         self.qtgui_const_sink_x_0.enable_axis_labels(True)
 
 
@@ -122,19 +120,16 @@ class QAM16_Transmitter(gr.top_block, Qt.QWidget):
 
         self._qtgui_const_sink_x_0_win = sip.wrapinstance(self.qtgui_const_sink_x_0.qwidget(), Qt.QWidget)
         self.top_layout.addWidget(self._qtgui_const_sink_x_0_win)
-        self.osmosdr_sink_0 = osmosdr.sink(
-            args="numchan=" + str(1) + " " + ""
-        )
-        self.osmosdr_sink_0.set_sample_rate(samp_rate)
-        self.osmosdr_sink_0.set_center_freq(4000000, 0)
-        self.osmosdr_sink_0.set_freq_corr(0, 0)
-        self.osmosdr_sink_0.set_gain(10, 0)
-        self.osmosdr_sink_0.set_if_gain(20, 0)
-        self.osmosdr_sink_0.set_bb_gain(20, 0)
-        self.osmosdr_sink_0.set_antenna('', 0)
-        self.osmosdr_sink_0.set_bandwidth(0, 0)
         self.mono_16bps_22k = blocks.wavfile_source('/Users/phil/dev/python/sdr/mono_16bps_22k.wav', True)
-        self.digital_constellation_encoder_bc_0 = digital.constellation_encoder_bc(constellation_object)
+        self.digital_constellation_modulator_0 = digital.generic_mod(
+            constellation=Constellation16QAM,
+            differential=True,
+            samples_per_symbol=2,
+            pre_diff_code=True,
+            excess_bw=0.35,
+            verbose=False,
+            log=False,
+            truncate=False)
         self.blocks_vector_to_stream_0 = blocks.vector_to_stream(gr.sizeof_char*1, 64)
         self.blocks_unpacked_to_packed_xx_0 = blocks.unpacked_to_packed_bb(4, gr.GR_LSB_FIRST)
         self.blocks_float_to_short_0 = blocks.float_to_short(1, 8192)
@@ -144,10 +139,9 @@ class QAM16_Transmitter(gr.top_block, Qt.QWidget):
         # Connections
         ##################################################
         self.connect((self.blocks_float_to_short_0, 0), (self.vocoder_codec2_encode_sp_0, 0))
-        self.connect((self.blocks_unpacked_to_packed_xx_0, 0), (self.digital_constellation_encoder_bc_0, 0))
+        self.connect((self.blocks_unpacked_to_packed_xx_0, 0), (self.digital_constellation_modulator_0, 0))
         self.connect((self.blocks_vector_to_stream_0, 0), (self.blocks_unpacked_to_packed_xx_0, 0))
-        self.connect((self.digital_constellation_encoder_bc_0, 0), (self.osmosdr_sink_0, 0))
-        self.connect((self.digital_constellation_encoder_bc_0, 0), (self.qtgui_const_sink_x_0, 0))
+        self.connect((self.digital_constellation_modulator_0, 0), (self.qtgui_const_sink_x_0, 0))
         self.connect((self.mono_16bps_22k, 0), (self.rational_resampler_xxx_0, 0))
         self.connect((self.rational_resampler_xxx_0, 0), (self.blocks_float_to_short_0, 0))
         self.connect((self.vocoder_codec2_encode_sp_0, 0), (self.blocks_vector_to_stream_0, 0))
@@ -172,14 +166,12 @@ class QAM16_Transmitter(gr.top_block, Qt.QWidget):
 
     def set_samp_rate(self, samp_rate):
         self.samp_rate = samp_rate
-        self.osmosdr_sink_0.set_sample_rate(self.samp_rate)
 
-    def get_constellation_object(self):
-        return self.constellation_object
+    def get_Constellation16QAM(self):
+        return self.Constellation16QAM
 
-    def set_constellation_object(self, constellation_object):
-        self.constellation_object = constellation_object
-        self.digital_constellation_encoder_bc_0.set_constellation(self.constellation_object)
+    def set_Constellation16QAM(self, Constellation16QAM):
+        self.Constellation16QAM = Constellation16QAM
 
 
 
