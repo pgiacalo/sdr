@@ -26,7 +26,7 @@ ax2.set_title('Cosine Wave (I component)')
 ax3.set_title('Resultant Waveform')
 for ax in [ax1, ax2, ax3]:
     ax.set_xlim(0, 360)
-    ax.set_ylim(-4, 4)
+    ax.set_ylim(-5, 5)
     ax.set_xlabel('Time (degrees)')
 
 # Set x-ticks to be in increments of 90 degrees and add a vertical line at 180 degrees
@@ -35,20 +35,20 @@ tick_labels = [f'{int(tick)}°' for tick in ticks]
 for ax in [ax1, ax2, ax3]:
     ax.set_xticks(ticks)
     ax.set_xticklabels(tick_labels)
-    ax.axvline(180, color='grey', linestyle='--', linewidth=0.5)  # Vertical line at 180 degrees
+    ax.axvline(180, color='grey', linestyle='--', linewidth=0.5)
 
 # Add horizontal grid lines at every integer value
 for ax in [ax1, ax2, ax3]:
-    ax.set_yticks(np.arange(-4, 5, 1))  # Horizontal lines at each integer from -4 to 4
+    ax.set_yticks(np.arange(-5, 6, 1))
     ax.grid(which='both', linestyle='--', linewidth=0.5, color='grey')
 
-# Create sliders to the left of the graphs
+# Create vertical sliders to the left of the graphs
 axcolor = 'lightgoldenrodyellow'
-axAmp1 = plt.axes([0.1, 0.05, 0.1, 0.03], facecolor=axcolor)
-axAmp2 = plt.axes([0.1, 0.1, 0.1, 0.03], facecolor=axcolor)
+axAmp1 = plt.axes([0.1, 0.25, 0.03, 0.65], facecolor=axcolor)
+axAmp2 = plt.axes([0.15, 0.25, 0.03, 0.65], facecolor=axcolor)
 
-sAmp1 = Slider(axAmp1, 'Amp Sine', -3, 3, valinit=0, valstep=0.1, valfmt='%1.1f')
-sAmp2 = Slider(axAmp2, 'Amp Cosine', -3, 3, valinit=0, valstep=0.1, valfmt='%1.1f')
+sAmp1 = Slider(axAmp1, 'Sine', -3, 3, valinit=0, valstep=0.1, valfmt='%1.1f', orientation='vertical')
+sAmp2 = Slider(axAmp2, 'Cosine', -3, 3, valinit=0, valstep=0.1, valfmt='%1.1f', orientation='vertical')
 
 # Phase angle text display
 info_text = ax3.text(0.05, 0.85, '', transform=ax3.transAxes)
@@ -68,11 +68,9 @@ def update(val):
     line2.set_ydata(cosine_wave)
     line3.set_ydata(resultant_waveform)
     
-    # Compute amplitude and phase angle of the resultant waveform
+    # Calculate and display amplitude and phase angle
     amplitude = np.sqrt(A**2 + B**2)
-    phase_angle = np.arctan2(B, A) * 180 / np.pi  # Convert radians to degrees
-    
-    # Update text display
+    phase_angle = np.arctan2(B, A) * 180 / np.pi
     info_text.set_text(f'Amplitude: {amplitude:.2f}, Phase Angle: {phase_angle:.2f}°')
     
     fig.canvas.draw_idle()
