@@ -82,14 +82,14 @@ def animate(frame):
     highlighted_point.set_offsets([[noisy_I, noisy_Q]])
     
     noisy_sine = A * np.sin(2 * np.pi * frequency * t) + noise_q
-    noisy_cosine = B * np.cos(2 * np.pi * frequency * t) + noise_i
+    noisy_cosine = -B * np.cos(2 * np.pi * frequency * t) + noise_i
     noisy_resultant = noisy_sine + noisy_cosine
     
     line1.set_ydata(noisy_sine)
     line2.set_ydata(noisy_cosine)
     line3.set_ydata(noisy_resultant)
     
-    ideal_signal = A * np.sin(2 * np.pi * frequency * t) + B * np.cos(2 * np.pi * frequency * t)
+    ideal_signal = A * np.sin(2 * np.pi * frequency * t) - B * np.cos(2 * np.pi * frequency * t)
     evm = calculate_evm(noisy_resultant, ideal_signal)
     evm_text.set_text(f"EVM: {evm:.2f}%")
     
@@ -199,6 +199,21 @@ highlighted_point = ax_const.scatter([], [], marker='o', color='red', s=100, zor
 for i, (x, y) in enumerate(zip(np.real(qam_signal), np.imag(qam_signal))):
     ax_const.text(x, y + 0.2, binary_values[i], ha='center', va='center')
 
+# Add circles to the Constellation diagram
+circle_radii = np.unique(np.sqrt(np.real(qam_signal)**2 + np.imag(qam_signal)**2))
+for radius in circle_radii:
+    circle = plt.Circle((0, 0), radius, fill=False, linestyle='--', color='lightgray')
+    ax_const.add_artist(circle)
+    ax_const.text(radius, 0.2, f'r = {radius:.2f}', color='gray', ha='left', va='bottom')
+
+# Add radial lines to the Constellation diagram
+angles = np.unique(np.arctan2(np.imag(qam_signal), np.real(qam_signal)))
+for angle in angles:
+    x = 4 * np.cos(angle)
+    y = 4 * np.sin(angle)
+    ax_const.plot([0, x], [0, y], color='lightgray', linestyle='--', zorder=1)
+    ax_const.text(x, y, f'{int(np.degrees(angle))}°', color='gray', ha='center', va='center')
+
 ax_const.set_title(f'{M}-QAM Constellation Diagram')
 ax_const.set_xlim(-5, 5)
 ax_const.set_ylim(-5, 5)
@@ -265,7 +280,7 @@ rax.set_xlim(0, 1)
 rax.set_ylim(0, 1)
 
 # Tutorial button (moved to bottom, next to radio buttons, height increased)
-tutorial_ax = plt.axes([0.62, 0.02, 0.1, 0.052])  # Increased height to match radio buttons
+tutorial_ax = plt.axes([0.57, 0.02, 0.1, 0.052])  # Adjusted position due to narrower radio button box
 tutorial_button = Button(tutorial_ax, 'Tutorial')
 tutorial_button.on_clicked(lambda x: show_tutorial())
 
@@ -277,10 +292,11 @@ fig.canvas.mpl_connect('motion_notify_event', hover)
 radio.on_clicked(change_modulation)
 
 # Global variables
-A, B = 1, 1
+A, B = 1, 1  # Initial values for 16-QAM
 
 # Animation
-anim = FuncAnimation(fig, animate, frames=None, interval=50, blit=False)
+# Animation
+anim = FuncAnimation(fig, animate, frames=None, interval=50, blit=False, cache_frame_data=False)
 anim.event_source.start()
 
 # Initial plot update
