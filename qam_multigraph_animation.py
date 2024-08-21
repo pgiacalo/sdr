@@ -19,11 +19,7 @@ def calculate_evm(signal, ideal_signal):
         evm = 0
     return evm
 
-def update_plot(val):
-    global A, B
-    A = round(sAmp1.val, 1)  # Sine amplitude
-    B = round(sAmp2.val, 1)  # Cosine amplitude
-
+def update_waveforms(A, B):
     sine_wave = A * np.sin(2 * np.pi * frequency * t)
     cosine_wave = B * np.cos(2 * np.pi * frequency * t)
     resultant_waveform = sine_wave + cosine_wave
@@ -37,14 +33,17 @@ def update_plot(val):
     evm = calculate_evm(resultant_waveform, resultant_waveform)
     evm_text.set_text(f"EVM: {evm:.2f}%")
 
-    # Calculate amplitude and phase
     amplitude = np.sqrt(A**2 + B**2)
-    phase = np.arctan2(A, B) * 180 / np.pi  # Convert to degrees
-
-    # Update amplitude and phase text
+    phase = np.arctan2(A, B) * 180 / np.pi
     amp_phase_text.set_text(f"Amplitude: {amplitude:.2f}\nPhase: {phase:.2f}°")
 
     fig.canvas.draw_idle()
+
+def update_plot(val):
+    global A, B
+    A = round(sAmp1.val, 1)  # Sine amplitude
+    B = round(sAmp2.val, 1)  # Cosine amplitude
+    update_waveforms(A, B)
 
 def reset_sliders(event):
     sAmp1.reset()
@@ -63,15 +62,10 @@ def hover(event):
     if event.inaxes == ax_const:
         cont, _ = scatter.contains(event)
         if cont:
-            plt.gcf().canvas.manager.set_window_title('Hovering over point')
             ax_const.set_title('16-QAM Constellation Diagram (Hovering)', color='red')
         else:
-            plt.gcf().canvas.manager.set_window_title('')
             ax_const.set_title('16-QAM Constellation Diagram', color='black')
-    else:
-        plt.gcf().canvas.manager.set_window_title('')
-        ax_const.set_title('16-QAM Constellation Diagram', color='black')
-    plt.gcf().canvas.draw_idle()
+        fig.canvas.draw_idle()
 
 def toggle_noise(label):
     if noise_checkbox.get_status()[0]:
@@ -105,24 +99,8 @@ def animate(frame):
         amplitude = np.sqrt(noisy_I**2 + noisy_Q**2)
         phase = np.arctan2(noisy_Q, noisy_I) * 180 / np.pi
         amp_phase_text.set_text(f"Amplitude: {amplitude:.2f}\nPhase: {phase:.2f}°")
-    else:
-        # When noise is off, just update with current A and B values
-        sine_wave = A * np.sin(2 * np.pi * frequency * t)
-        cosine_wave = B * np.cos(2 * np.pi * frequency * t)
-        resultant_waveform = sine_wave + cosine_wave
         
-        line1.set_ydata(sine_wave)
-        line2.set_ydata(cosine_wave)
-        line3.set_ydata(resultant_waveform)
-        
-        highlighted_point.set_offsets([[B, A]])
-        
-        evm = calculate_evm(resultant_waveform, resultant_waveform)
-        evm_text.set_text(f"EVM: {evm:.2f}%")
-        
-        amplitude = np.sqrt(A**2 + B**2)
-        phase = np.arctan2(A, B) * 180 / np.pi
-        amp_phase_text.set_text(f"Amplitude: {amplitude:.2f}\nPhase: {phase:.2f}°")
+        fig.canvas.draw_idle()
     
     return [highlighted_point, line1, line2, line3, evm_text, amp_phase_text]
 
@@ -145,6 +123,11 @@ qam_signal = qam_modulate(I_values, Q_values, binary_values)
 fig, (ax_const, ax_waves) = plt.subplots(1, 2, figsize=(12, 5))
 plt.subplots_adjust(left=0.1, right=0.9, bottom=0.3, top=0.9)
 
+# Set the background color explicitly
+fig.patch.set_facecolor('white')
+ax_const.set_facecolor('white')
+ax_waves.set_facecolor('white')
+
 # Configure the constellation diagram
 scatter = ax_const.scatter(np.real(qam_signal), np.imag(qam_signal), color='blue', zorder=5, picker=True)
 highlighted_point = ax_const.scatter([], [], marker='o', color='red', s=100, zorder=10)
@@ -162,14 +145,14 @@ for radius in circle_radii:
 # Add radial lines to the Constellation diagram
 for point in qam_signal:
     angle = np.angle(point)
-    ax_const.plot([0, 4*np.cos(angle)], [0, 4*np.sin(angle)], 
+    ax_const.plot([0, 5*np.cos(angle)], [0, 5*np.sin(angle)], 
                   linestyle='--', color='lightgray', zorder=1)
 
 ax_const.set_title('16-QAM Constellation Diagram')
-ax_const.set_xlim(-4, 4)
-ax_const.set_ylim(-4, 4)
-ax_const.set_xticks(np.arange(-4, 5, 1))
-ax_const.set_yticks(np.arange(-4, 5, 1))
+ax_const.set_xlim(-5, 5)
+ax_const.set_ylim(-5, 5)
+ax_const.set_xticks(np.arange(-5, 6, 1))
+ax_const.set_yticks(np.arange(-5, 6, 1))
 ax_const.axhline(0, color='black', linestyle='--')
 ax_const.axvline(0, color='black', linestyle='--')
 ax_const.grid(True)
@@ -186,13 +169,13 @@ line3, = ax_waves.plot(t_degrees, np.zeros_like(t), 'b', label='Combination')
 # Configure the waveform plot
 ax_waves.set_title('Waveforms')
 ax_waves.set_xlim(0, 360)
-ax_waves.set_ylim(-4, 4)
+ax_waves.set_ylim(-5, 5)
 ax_waves.set_xlabel('Angle')
 ax_waves.set_xticks(np.arange(0, 360 + 90, 90))
 ax_waves.set_xticklabels([f'{int(tick)}°' for tick in np.arange(0, 360 + 90, 90)])
 ax_waves.axvline(180, color='grey', linestyle='--')
 ax_waves.grid(which='both', linestyle='--')
-ax_waves.set_yticks(np.arange(-4, 5, 1))
+ax_waves.set_yticks(np.arange(-5, 6, 1))
 ax_waves.legend()
 
 # Create horizontal sliders
@@ -230,7 +213,7 @@ fig.canvas.mpl_connect('motion_notify_event', hover)
 A, B = 1, 1  # Initial values
 
 # Create animation
-anim = FuncAnimation(fig, animate, frames=None, interval=500, blit=True, cache_frame_data=False)
+anim = FuncAnimation(fig, animate, frames=None, interval=500, blit=False, cache_frame_data=False)
 # Start with animation running (noise on)
 anim.event_source.start()
 
