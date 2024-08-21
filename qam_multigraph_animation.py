@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.widgets import Slider, Button, CheckButtons
+from matplotlib.widgets import Slider
 from matplotlib.animation import FuncAnimation
 
 def qam_modulate(I_values, Q_values, binary_values):
@@ -45,12 +45,6 @@ def update_plot(val):
     B = round(sAmp2.val, 1)  # Cosine amplitude
     update_waveforms(A, B)
 
-def reset_sliders(event):
-    sAmp1.reset()
-    sAmp2.reset()
-    sNoise.reset()
-    update_plot(None)
-
 def on_pick(event):
     index = event.ind[0]
     I, Q = np.real(qam_signal)[index], np.imag(qam_signal)[index]
@@ -67,41 +61,33 @@ def hover(event):
             ax_const.set_title('16-QAM Constellation Diagram', color='black')
         fig.canvas.draw_idle()
 
-def toggle_noise(label):
-    if noise_checkbox.get_status()[0]:
-        anim.event_source.start()
-    else:
-        anim.event_source.stop()
-        update_plot(None)
-
 def animate(frame):
-    if noise_checkbox.get_status()[0]:
-        noise_amplitude = sNoise.val
-        noise_i = np.random.normal(0, noise_amplitude)
-        noise_q = np.random.normal(0, noise_amplitude)
-        noisy_I = B + noise_i
-        noisy_Q = A + noise_q
-        
-        highlighted_point.set_offsets([[noisy_I, noisy_Q]])
-        
-        noisy_sine = A * np.sin(2 * np.pi * frequency * t) + noise_q
-        noisy_cosine = B * np.cos(2 * np.pi * frequency * t) + noise_i
-        noisy_resultant = noisy_sine + noisy_cosine
-        
-        line1.set_ydata(noisy_sine)
-        line2.set_ydata(noisy_cosine)
-        line3.set_ydata(noisy_resultant)
-        
-        ideal_signal = A * np.sin(2 * np.pi * frequency * t) + B * np.cos(2 * np.pi * frequency * t)
-        evm = calculate_evm(noisy_resultant, ideal_signal)
-        evm_text.set_text(f"EVM: {evm:.2f}%")
-        
-        amplitude = np.sqrt(noisy_I**2 + noisy_Q**2)
-        phase = np.arctan2(noisy_Q, noisy_I) * 180 / np.pi
-        amp_phase_text.set_text(f"Amplitude: {amplitude:.2f}\nPhase: {phase:.2f}°")
-        
-        fig.canvas.draw_idle()
+    noise_amplitude = sNoise.val
+    noise_i = np.random.normal(0, noise_amplitude)
+    noise_q = np.random.normal(0, noise_amplitude)
+    noisy_I = B + noise_i
+    noisy_Q = A + noise_q
     
+    highlighted_point.set_offsets([[noisy_I, noisy_Q]])
+    
+    noisy_sine = A * np.sin(2 * np.pi * frequency * t) + noise_q
+    noisy_cosine = B * np.cos(2 * np.pi * frequency * t) + noise_i
+    noisy_resultant = noisy_sine + noisy_cosine
+    
+    line1.set_ydata(noisy_sine)
+    line2.set_ydata(noisy_cosine)
+    line3.set_ydata(noisy_resultant)
+    
+    ideal_signal = A * np.sin(2 * np.pi * frequency * t) + B * np.cos(2 * np.pi * frequency * t)
+    evm = calculate_evm(noisy_resultant, ideal_signal)
+    evm_text.set_text(f"EVM: {evm:.2f}%")
+    
+    amplitude = np.sqrt(noisy_I**2 + noisy_Q**2)
+    phase = np.arctan2(noisy_Q, noisy_I) * 180 / np.pi
+    amp_phase_text.set_text(f"Amplitude: {amplitude:.2f}\nPhase: {phase:.2f}°")
+    
+    fig.canvas.draw_idle()
+
     return [highlighted_point, line1, line2, line3, evm_text, amp_phase_text]
 
 # Define the parameters
@@ -120,8 +106,8 @@ binary_values = [f"{i:04b}" for i in range(16)]
 qam_signal = qam_modulate(I_values, Q_values, binary_values)
 
 # Create the figure and axes
-fig, (ax_const, ax_waves) = plt.subplots(1, 2, figsize=(12, 5))
-plt.subplots_adjust(left=0.1, right=0.9, bottom=0.3, top=0.9)
+fig, (ax_const, ax_waves) = plt.subplots(1, 2, figsize=(14, 7))
+plt.subplots_adjust(left=0.1, right=0.9, bottom=0.2, top=0.9)
 
 # Set the background color explicitly
 fig.patch.set_facecolor('white')
@@ -140,7 +126,7 @@ for radius in circle_radii:
     circle = plt.Circle((0, 0), radius, fill=False, linestyle='--', color='lightgray')
     ax_const.add_artist(circle)
     ax_const.text(0, radius + 0.2, f'r = {radius:.2f}', 
-                  color='lightgray', ha='center', va='bottom')
+                  color='black', ha='center', va='bottom')  # Changed to black
 
 # Add radial lines to the Constellation diagram
 for point in qam_signal:
@@ -153,8 +139,8 @@ ax_const.set_xlim(-5, 5)
 ax_const.set_ylim(-5, 5)
 ax_const.set_xticks(np.arange(-5, 6, 1))
 ax_const.set_yticks(np.arange(-5, 6, 1))
-ax_const.axhline(0, color='black', linestyle='--')
-ax_const.axvline(0, color='black', linestyle='--')
+ax_const.axhline(0, color='lightgray', linestyle='-')  # Changed to lightgray
+ax_const.axvline(0, color='lightgray', linestyle='-')  # Changed to lightgray
 ax_const.grid(True)
 
 # Add labels for In-Phase (I) and Quadrature (Q)
@@ -178,24 +164,17 @@ ax_waves.grid(which='both', linestyle='--')
 ax_waves.set_yticks(np.arange(-5, 6, 1))
 ax_waves.legend()
 
-# Create horizontal sliders
-axcolor = 'lightgoldenrodyellow'
-axAmp1 = plt.axes([0.1, 0.2, 0.3, 0.03], facecolor=axcolor)
-axAmp2 = plt.axes([0.55, 0.2, 0.3, 0.03], facecolor=axcolor)
-axNoise = plt.axes([0.1, 0.15, 0.75, 0.03], facecolor=axcolor)
-sAmp1 = Slider(axAmp1, 'Sine Amplitude', -3, 3, valinit=1, valstep=0.1, valfmt='%1.1f')
+# Create vertical slider for Sine Amplitude
+axAmp1 = plt.axes([0.05, 0.3, 0.02, 0.4])
+sAmp1 = Slider(axAmp1, 'Sine\nAmplitude', -3, 3, valinit=1, valstep=0.1, valfmt='%1.1f', orientation='vertical')
+
+# Create horizontal slider for Cosine Amplitude
+axAmp2 = plt.axes([0.2, 0.1, 0.2, 0.03])
 sAmp2 = Slider(axAmp2, 'Cosine Amplitude', -3, 3, valinit=1, valstep=0.1, valfmt='%1.1f')
+
+# Create horizontal slider for Noise Level
+axNoise = plt.axes([0.55, 0.05, 0.35, 0.03])
 sNoise = Slider(axNoise, 'Noise Level', 0, 1, valinit=0.05, valstep=0.01, valfmt='%1.2f')
-
-# Create a reset button
-resetax = plt.axes([0.8, 0.05, 0.1, 0.04])
-reset_button = Button(resetax, 'Reset', color=axcolor, hovercolor='0.975')
-reset_button.on_clicked(reset_sliders)
-
-# Create a checkbox for noise
-noise_ax = plt.axes([0.1, 0.05, 0.15, 0.05])
-noise_checkbox = CheckButtons(noise_ax, ['Add Noise'], [True])
-noise_checkbox.on_clicked(toggle_noise)
 
 # Add EVM text
 evm_text = ax_waves.text(0.02, 0.95, f"EVM: {0:.2f}%", ha='left', va='top', transform=ax_waves.transAxes)
