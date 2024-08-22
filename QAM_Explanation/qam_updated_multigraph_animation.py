@@ -28,7 +28,7 @@ def calculate_ber(snr_db, M):
 def update_waveforms(A, B):
     """Update waveforms based on slider values"""
     sine_wave = A * np.sin(2 * np.pi * frequency * t)
-    cosine_wave = -B * np.cos(2 * np.pi * frequency * t)  # Note the negative sign
+    cosine_wave = B * np.cos(2 * np.pi * frequency * t)
     resultant_waveform = sine_wave + cosine_wave
 
     line1.set_ydata(sine_wave)
@@ -82,14 +82,14 @@ def animate(frame):
     highlighted_point.set_offsets([[noisy_I, noisy_Q]])
     
     noisy_sine = A * np.sin(2 * np.pi * frequency * t) + noise_q
-    noisy_cosine = -B * np.cos(2 * np.pi * frequency * t) + noise_i
+    noisy_cosine = B * np.cos(2 * np.pi * frequency * t) + noise_i
     noisy_resultant = noisy_sine + noisy_cosine
     
     line1.set_ydata(noisy_sine)
     line2.set_ydata(noisy_cosine)
     line3.set_ydata(noisy_resultant)
     
-    ideal_signal = A * np.sin(2 * np.pi * frequency * t) - B * np.cos(2 * np.pi * frequency * t)
+    ideal_signal = A * np.sin(2 * np.pi * frequency * t) + B * np.cos(2 * np.pi * frequency * t)
     evm = calculate_evm(noisy_resultant, ideal_signal)
     evm_text.set_text(f"EVM: {evm:.2f}%")
     
@@ -106,22 +106,18 @@ def animate(frame):
     return [highlighted_point, line1, line2, line3, evm_text, amp_phase_text, ber_text]
 
 def change_modulation(label):
-    global M, qam_signal, binary_values, scatter, A, B
+    global M, qam_signal, binary_values, scatter, A
     M = int(label.split('-')[0])
     
     if M == 2:  # BPSK
         I_values = np.array([-1, 1])
         Q_values = np.array([0])
-        A, B = 0, 1  # Set default to 0,1 for BPSK
     elif M == 4:  # QPSK
         I_values = Q_values = np.array([-1, 1])
-        A, B = 1, 1  # Set default to 1,1 for QPSK
+        A = 0  # Set default sine amplitude to 0 for QPSK
+        sAmp1.set_val(0)  # Update slider value
     else:  # 16-QAM
         I_values = Q_values = np.array([-3, -1, 1, 3])
-        A, B = 1, 1  # Set default to 1,1 for 16-QAM
-    
-    sAmp1.set_val(A)  # Update Q slider value
-    sAmp2.set_val(B)  # Update I slider value
     
     binary_values = [f"{i:0{int(np.log2(M))}b}" for i in range(M)]
     qam_signal, _ = qam_modulate(I_values, Q_values, binary_values)
@@ -199,21 +195,6 @@ highlighted_point = ax_const.scatter([], [], marker='o', color='red', s=100, zor
 for i, (x, y) in enumerate(zip(np.real(qam_signal), np.imag(qam_signal))):
     ax_const.text(x, y + 0.2, binary_values[i], ha='center', va='center')
 
-# Add circles to the Constellation diagram
-circle_radii = np.unique(np.sqrt(np.real(qam_signal)**2 + np.imag(qam_signal)**2))
-for radius in circle_radii:
-    circle = plt.Circle((0, 0), radius, fill=False, linestyle='--', color='lightgray')
-    ax_const.add_artist(circle)
-    ax_const.text(radius, 0.2, f'r = {radius:.2f}', color='gray', ha='left', va='bottom')
-
-# Add radial lines to the Constellation diagram
-angles = np.unique(np.arctan2(np.imag(qam_signal), np.real(qam_signal)))
-for angle in angles:
-    x = 4 * np.cos(angle)
-    y = 4 * np.sin(angle)
-    ax_const.plot([0, x], [0, y], color='lightgray', linestyle='--', zorder=1)
-    ax_const.text(x, y, f'{int(np.degrees(angle))}°', color='gray', ha='center', va='center')
-
 ax_const.set_title(f'{M}-QAM Constellation Diagram')
 ax_const.set_xlim(-5, 5)
 ax_const.set_ylim(-5, 5)
@@ -224,6 +205,20 @@ ax_const.axvline(0, color='lightgray', linestyle='-')
 ax_const.grid(True)
 ax_const.set_xlabel('In-Phase (I)')
 ax_const.set_ylabel('Quadrature (Q)')
+
+# Add circles to the Constellation diagram
+circle_radii = [np.sqrt(2), np.sqrt(10), np.sqrt(18)]
+for radius in circle_radii:
+    circle = plt.Circle((0, 0), radius, fill=False, linestyle='--', color='lightgray')
+    ax_const.add_artist(circle)
+    ax_const.text(-5.2, radius, f'r = {radius:.2f}', 
+                  color='black', ha='right', va='center')
+
+# Add radial lines to the Constellation diagram
+for point in qam_signal:
+    angle = np.angle(point)
+    ax_const.plot([0, 5*np.cos(angle)], [0, 5*np.sin(angle)], 
+                  linestyle='--', color='lightgray', zorder=1)
 
 # Waveform plot setup
 line1, = ax_waves.plot(t_degrees, np.zeros_like(t), 'r', label='Sine (Q)')
@@ -256,31 +251,26 @@ evm_text = ax_waves.text(0.02, 0.95, f"EVM: {0:.2f}%", ha='left', va='top', tran
 amp_phase_text = ax_waves.text(0.02, 0.85, f"Amplitude: {0:.2f}\nPhase: {0:.2f}°", ha='left', va='top', transform=ax_waves.transAxes)
 ber_text = ax_waves.text(0.02, 0.75, f"BER: {0:.2e}", ha='left', va='top', transform=ax_waves.transAxes)
 
-# Radio buttons for modulation selection (moved to bottom, horizontal arrangement)
-rax = plt.axes([0.4, 0.02, 0.15, 0.052])  # Reduced width by half
+# Radio buttons for modulation selection (moved to bottom, horizontal orientation)
+rax = plt.axes([0.3, 0.02, 0.4, 0.04])
 radio = RadioButtons(rax, ('2-BPSK', '4-QPSK', '16-QAM'), active=2)
 
-# Manually adjust the radio button positions to be horizontal and spread vertically
-radio_buttons = [child for child in radio.ax.get_children() if isinstance(child, plt.Circle)]
-radio_labels = [child for child in radio.ax.get_children() if isinstance(child, plt.Text)]
+# Radio buttons for modulation selection (moved to bottom, horizontal orientation)
+rax = plt.axes([0.3, 0.02, 0.4, 0.04])
+radio = RadioButtons(rax, ('2-BPSK', '4-QPSK', '16-QAM'), active=2)
 
-for i, (button, label) in enumerate(zip(radio_buttons, radio_labels)):
-    x = 0.1 + i * 0.3  # Spread out horizontally
-    y = 0.65 if i % 2 == 0 else 0.35  # Alternate between upper and lower positions
-    button.center = (x, y)
-    button.radius = 0.05  # Adjust the size of the radio buttons
-    label.set_position((x + 0.07, y))  # Adjust label positions
+# Adjust radio button layout to be horizontal
+radio_circles = [child for child in radio.ax.get_children() if isinstance(child, plt.Circle)]
+radio_labels = radio.labels
 
-# Update the RadioButtons container to reflect the new button positions
-radio.circles = radio_buttons
-radio.labels = radio_labels
-
-# Adjust the axes of the RadioButtons to encompass all buttons
-rax.set_xlim(0, 1)
-rax.set_ylim(0, 1)
-
-# Tutorial button (moved to bottom, next to radio buttons, height increased)
-tutorial_ax = plt.axes([0.57, 0.02, 0.1, 0.052])  # Adjusted position due to narrower radio button box
+for i, (circle, label) in enumerate(zip(radio_circles, radio_labels)):
+    circle.set_radius(0.08)
+    circle.center = (0.1 + i * 0.3, 0.5)
+    label.set_position((circle.center[0] + 0.1, circle.center[1]))
+    label.set_horizontalalignment('left')
+    
+# Tutorial button (moved to bottom, next to radio buttons)
+tutorial_ax = plt.axes([0.72, 0.02, 0.1, 0.04])
 tutorial_button = Button(tutorial_ax, 'Tutorial')
 tutorial_button.on_clicked(lambda x: show_tutorial())
 
@@ -292,9 +282,8 @@ fig.canvas.mpl_connect('motion_notify_event', hover)
 radio.on_clicked(change_modulation)
 
 # Global variables
-A, B = 1, 1  # Initial values for 16-QAM
+A, B = 1, 1
 
-# Animation
 # Animation
 anim = FuncAnimation(fig, animate, frames=None, interval=50, blit=False, cache_frame_data=False)
 anim.event_source.start()
