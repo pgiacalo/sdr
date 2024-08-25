@@ -108,9 +108,13 @@ class QAMSimulation:
         self.ax_waves.set_yticks(np.arange(-5, 6, 1))
         self.ax_waves.legend()
 
-        self.amp_phase_text = self.ax_waves.text(0.02, 0.75, f"Amplitude: {0:.2f}\nPhase: {0:.2f}°", ha='left', va='top', transform=self.ax_waves.transAxes)
-        self.evm_text = self.ax_waves.text(0.02, 0.85, f"EVM: {0:.2f}%", ha='left', va='top', transform=self.ax_waves.transAxes)
-        self.ber_text = self.ax_waves.text(0.02, 0.95, f"BER: {0:.2e}", ha='left', va='top', transform=self.ax_waves.transAxes)
+        # Only keep Amplitude and Phase text, moved to upper left
+        self.amp_phase_text = self.ax_waves.text(0.02, 0.98, "", ha='left', va='top', transform=self.ax_waves.transAxes)
+
+        # Comment out EVM and BER text
+        # self.evm_text = self.ax_waves.text(0.02, 0.85, "", ha='left', va='top', transform=self.ax_waves.transAxes)
+        # self.ber_text = self.ax_waves.text(0.02, 0.75, "", ha='left', va='top', transform=self.ax_waves.transAxes)
+
 
     def setup_controls(self):
         axAmp1 = plt.axes([0.1, 0.15, 0.3, 0.03])
@@ -147,7 +151,7 @@ class QAMSimulation:
         self.highlighted_point.set_offsets([[self.B, self.A]])
 
         evm = self.calculate_evm(resultant_waveform, resultant_waveform)
-        self.evm_text.set_text(f"EVM: {evm:.2f}%")
+        # self.evm_text.set_text(f"EVM: {evm:.2f}%")
 
         amplitude = np.sqrt(self.A**2 + self.B**2)
         phase = np.arctan2(self.A, self.B) * 180 / np.pi
@@ -155,7 +159,7 @@ class QAMSimulation:
 
         snr_db = 20 * np.log10(amplitude / self.sNoise.val) if self.sNoise.val > 0 else float('inf')
         ber = self.calculate_ber(snr_db)
-        self.ber_text.set_text(f"BER: {ber:.2e}")
+        # self.ber_text.set_text(f"BER: {ber:.2e}")
 
         self.fig.canvas.draw_idle()
 
@@ -208,21 +212,23 @@ class QAMSimulation:
         self.line2.set_ydata(noisy_cosine)
         self.line3.set_ydata(noisy_resultant)
         
-        ideal_signal = self.A * np.sin(2 * np.pi * self.frequency * self.t) + self.B * np.cos(2 * np.pi * self.frequency * self.t)
-        evm = self.calculate_evm(noisy_resultant, ideal_signal)
-        self.evm_text.set_text(f"EVM: {evm:.2f}%")
-        
+        # Update only Amplitude and Phase
         amplitude = np.sqrt(noisy_I**2 + noisy_Q**2)
         phase = np.arctan2(noisy_Q, noisy_I) * 180 / np.pi
         self.amp_phase_text.set_text(f"Amplitude: {amplitude:.2f}\nPhase: {phase:.2f}°")
         
-        snr_db = 20 * np.log10(amplitude / noise_amplitude) if noise_amplitude > 0 else float('inf')
-        ber = self.calculate_ber(snr_db)
-        self.ber_text.set_text(f"BER: {ber:.2e}")
+        # Comment out EVM and BER calculations and text updates
+        # ideal_signal = self.A * np.sin(2 * np.pi * self.frequency * self.t) + self.B * np.cos(2 * np.pi * self.frequency * self.t)
+        # evm = self.calculate_evm(noisy_resultant, ideal_signal)
+        # self.evm_text.set_text(f"EVM: {evm:.2f}%")
+        
+        # snr_db = 20 * np.log10(amplitude / noise_amplitude) if noise_amplitude > 0 else float('inf')
+        # ber = self.calculate_ber(snr_db)
+        # self.ber_text.set_text(f"BER: {ber:.2e}")
         
         self.fig.canvas.draw_idle()
 
-        return [self.highlighted_point, self.trail, self.line1, self.line2, self.line3, self.evm_text, self.amp_phase_text, self.ber_text]
+        return [self.highlighted_point, self.trail, self.line1, self.line2, self.line3, self.amp_phase_text]
 
     def change_modulation(self, label):
         self.M = int(label.split('-')[0])
@@ -268,22 +274,23 @@ class QAMSimulation:
            • Adjust amplitudes of I and Q components
            • Control noise level
         
-        4. Metrics:
-           • EVM (Error Vector Magnitude):
-             - Measures difference between ideal and actual received symbol
-             - Higher EVM indicates more distortion
-           • BER (Bit Error Rate):
-             - Ratio of incorrect bits to total bits
-             - Lower BER indicates better quality
-        
-        5. Interaction:
+        4. Interaction:
            • Click on constellation points
            • Hover over constellation diagram
            • Change modulation order
-        
+
+                
         Experiment with different settings to see
-        how they affect the signal and error rates!
+        how they affect the signals and errors.
         """
+        # 5. Metrics:
+        #    • EVM (Error Vector Magnitude):
+        #      - Measures difference between ideal and actual received symbol
+        #      - Higher EVM indicates more distortion
+        #    • BER (Bit Error Rate):
+        #      - Ratio of incorrect bits to total bits
+        #      - Lower BER indicates better quality
+
         plt.figure(figsize=(10, 8))
         plt.text(0.05, 0.95, tutorial_text, fontsize=12, va='top')
         plt.axis('off')
