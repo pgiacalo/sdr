@@ -370,8 +370,8 @@ class QAMSimulation:
             self.current_bit_index = 0
             self.frame_counter = 0
         else:
-            # Remove the red dot and clear bit texts when streaming is stopped
-            self.highlighted_point.set_offsets([])
+            # Clear the highlighted point safely
+            self.highlighted_point.set_offsets(np.empty((0, 2)))
             self.bit_text.set_text("")
         self.fig.canvas.draw_idle()
 
@@ -387,12 +387,18 @@ class QAMSimulation:
                 self.highlighted_point.set_offsets([[i, q]])
                 self.fig.canvas.draw_idle()
 
+
     def on_close(self, event):
         logging.info("Window close event triggered")
         if self.anim is not None:
             logging.info("Attempting to stop animation")
             try:
-                self.anim.event_source.stop()
+                if hasattr(self.anim, 'event_source') and self.anim.event_source is not None:
+                    self.anim.event_source.stop()
+                elif hasattr(self.anim, '_stop'):
+                    self.anim._stop()
+                else:
+                    logging.warning("No method found to stop animation")
             except Exception as e:
                 logging.error(f"Error stopping animation: {e}")
         
