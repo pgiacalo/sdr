@@ -90,7 +90,7 @@ class QAMSimulation:
             angle = np.angle(point)
             self.ax_const.plot([0, 5*np.cos(angle)], [0, 5*np.sin(angle)], linestyle='--', color='lightgray', zorder=1)
 
-        self.trail = self.ax_const.scatter([], [], color='pink', alpha=0.3, s=20, zorder=4)
+        self.trail = self.ax_const.scatter([], [], color='red', alpha=0.1, s=20, zorder=4)
 
     def setup_waveform_plot(self):
         self.line1, = self.ax_waves.plot(self.t_degrees, np.zeros_like(self.t), 'r', label='Sine (Q)')
