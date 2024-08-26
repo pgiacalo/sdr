@@ -8,6 +8,7 @@ import logging
 logging.basicConfig(level=logging.INFO)
 
 class QAMSimulation:
+
     def __init__(self):
         self.frequency = 1
         self.sampling_rate = 1000
@@ -23,11 +24,18 @@ class QAMSimulation:
         self.A = 1
         self.B = 1
         
-        self.max_trail_length = 100  # Limit the number of trail points
+        self.max_trail_length = 100
         self.trail_points = []
-        self.trail = None  # We'll initialize this in setup_constellation_diagram
+        self.trail = None
         
         self.anim = None
+        
+        self.streaming = False
+        self.bit_sequence = self.generate_bit_sequence()
+        self.current_bit_index = 0
+        self.symbol_duration = 40  # 40 frames * 50ms = 2 seconds
+        self.highlight_duration = 10  # 10 frames * 50ms = 0.5 seconds for red highlight
+        self.frame_counter = 0
         
         self.setup_plot()
         self.setup_controls()
@@ -63,6 +71,29 @@ class QAMSimulation:
         self.setup_waveform_plot()
 
 
+    def generate_bit_sequence(self):
+        all_symbols = list(range(16))
+        np.random.shuffle(all_symbols)
+        bit_sequence = []
+        for symbol in all_symbols:
+            bit_sequence.extend([int(b) for b in f"{symbol:04b}"])
+        return np.array(bit_sequence)
+
+    def format_bit_string(self, bit_string, highlight_start=None):
+        formatted = ' '.join(bit_string[i:i+4] for i in range(0, len(bit_string), 4))
+        if highlight_start is not None:
+            group_start = (highlight_start // 4) * 5  # Start of the group containing the highlight
+            offset = highlight_start % 4
+            
+            # Add two spaces before underlining to shift it two characters to the right
+            underline_start = group_start + offset + 1
+            
+            formatted = (formatted[:underline_start] +
+                         '\u0332' + '\u0332'.join(formatted[underline_start:underline_start+4]) +
+                         formatted[underline_start+4:])
+        
+        return formatted
+
     def setup_constellation_diagram(self):
         self.scatter = self.ax_const.scatter(np.real(self.qam_signal), np.imag(self.qam_signal), color='blue', zorder=5, picker=True)
         self.highlighted_point = self.ax_const.scatter([], [], marker='o', color='red', s=100, zorder=10)
@@ -91,6 +122,9 @@ class QAMSimulation:
             self.ax_const.plot([0, 5*np.cos(angle)], [0, 5*np.sin(angle)], linestyle='--', color='lightgray', zorder=1)
 
         self.trail = self.ax_const.scatter([], [], color='red', alpha=0.1, s=20, zorder=4)
+        
+        self.bit_text = self.ax_const.text(0.05, 1.05, "", transform=self.ax_const.transAxes, fontsize=12, fontweight='bold')
+
 
     def setup_waveform_plot(self):
         self.line1, = self.ax_waves.plot(self.t_degrees, np.zeros_like(self.t), 'r', label='Sine (Q)')
@@ -132,12 +166,17 @@ class QAMSimulation:
         tutorial_ax = plt.axes([0.72, 0.02, 0.1, 0.04])
         self.tutorial_button = Button(tutorial_ax, 'Tutorial')
 
+        stream_ax = plt.axes([0.82, 0.02, 0.1, 0.04])
+        self.stream_button = Button(stream_ax, 'Start Animation')
+
         self.sAmp1.on_changed(self.update_plot)
         self.sAmp2.on_changed(self.update_plot)
         self.fig.canvas.mpl_connect('pick_event', self.on_pick)
         self.fig.canvas.mpl_connect('motion_notify_event', self.hover)
         self.radio.on_clicked(self.change_modulation)
         self.tutorial_button.on_clicked(self.show_tutorial)
+        self.stream_button.on_clicked(self.toggle_stream)
+
 
     def update_waveforms(self):
         sine_wave = self.A * np.sin(2 * np.pi * self.frequency * self.t)
@@ -167,6 +206,8 @@ class QAMSimulation:
         self.A = round(self.sAmp1.val, 1)
         self.B = round(self.sAmp2.val, 1)
         self.update_waveforms()
+        self.highlighted_point.set_offsets([[self.B, self.A]])
+
 
     def on_pick(self, event):
         index = event.ind[0]
@@ -185,24 +226,45 @@ class QAMSimulation:
             self.fig.canvas.draw_idle()
 
 
+    def get_symbol_for_bits(self, bits):
+        bit_string = ''.join(map(str, bits))
+        index = int(bit_string, 2)
+        return self.qam_signal[index]
+
+
+
     def animate(self, frame):
+        if self.streaming:
+            if self.frame_counter == 0:
+                bits = self.bit_sequence[self.current_bit_index:self.current_bit_index+4]
+                full_bit_string = ''.join(map(str, self.bit_sequence))
+                formatted_bits = self.format_bit_string(full_bit_string, self.current_bit_index)
+                self.bit_text.set_text(f"Bits: {formatted_bits}")
+
+                symbol = self.get_symbol_for_bits(bits)
+                self.highlighted_point.set_offsets([[np.real(symbol), np.imag(symbol)]])
+
+                self.sAmp2.set_val(np.real(symbol))
+                self.sAmp1.set_val(np.imag(symbol))
+                self.update_plot(None)
+
+                self.current_bit_index = (self.current_bit_index + 4) % len(self.bit_sequence)
+
+            self.frame_counter = (self.frame_counter + 1) % self.symbol_duration
+
         noise_amplitude = self.sNoise.val
         noise_i = np.random.normal(0, noise_amplitude)
         noise_q = np.random.normal(0, noise_amplitude)
         noisy_I = self.B + noise_i
         noisy_Q = self.A + noise_q
         
-        # Update trail points
         self.trail_points.append((noisy_I, noisy_Q))
         if len(self.trail_points) > self.max_trail_length:
             self.trail_points = self.trail_points[-self.max_trail_length:]
         
-        # Update trail display
         if self.trail_points:
             x, y = zip(*self.trail_points)
             self.trail.set_offsets(np.c_[x, y])
-        
-        self.highlighted_point.set_offsets([[noisy_I, noisy_Q]])
         
         noisy_sine = self.A * np.sin(2 * np.pi * self.frequency * self.t) + noise_q
         noisy_cosine = self.B * np.cos(2 * np.pi * self.frequency * self.t) + noise_i
@@ -212,23 +274,14 @@ class QAMSimulation:
         self.line2.set_ydata(noisy_cosine)
         self.line3.set_ydata(noisy_resultant)
         
-        # Update only Amplitude and Phase
         amplitude = np.sqrt(noisy_I**2 + noisy_Q**2)
         phase = np.arctan2(noisy_Q, noisy_I) * 180 / np.pi
         self.amp_phase_text.set_text(f"Amplitude: {amplitude:.2f}\nPhase: {phase:.2f}°")
         
-        # Comment out EVM and BER calculations and text updates
-        # ideal_signal = self.A * np.sin(2 * np.pi * self.frequency * self.t) + self.B * np.cos(2 * np.pi * self.frequency * self.t)
-        # evm = self.calculate_evm(noisy_resultant, ideal_signal)
-        # self.evm_text.set_text(f"EVM: {evm:.2f}%")
-        
-        # snr_db = 20 * np.log10(amplitude / noise_amplitude) if noise_amplitude > 0 else float('inf')
-        # ber = self.calculate_ber(snr_db)
-        # self.ber_text.set_text(f"BER: {ber:.2e}")
-        
         self.fig.canvas.draw_idle()
 
-        return [self.highlighted_point, self.trail, self.line1, self.line2, self.line3, self.amp_phase_text]
+        return [self.highlighted_point, self.trail, self.line1, self.line2, self.line3, 
+                self.amp_phase_text, self.bit_text]
 
     def change_modulation(self, label):
         self.M = int(label.split('-')[0])
@@ -297,6 +350,7 @@ class QAMSimulation:
         plt.title("QAM Modulation Tutorial")
         plt.show()
 
+
     def run(self):
         logging.info("Starting QAM simulation")
         self.anim = FuncAnimation(self.fig, self.animate, frames=None, interval=50, blit=False, cache_frame_data=False)
@@ -305,8 +359,33 @@ class QAMSimulation:
             self.anim.event_source = self.anim._get_timer()
         self.anim.event_source.start()
         self.fig.canvas.mpl_connect('close_event', self.on_close)
+        self.fig.canvas.mpl_connect('button_press_event', self.on_click)
         plt.show()
 
+
+    def toggle_stream(self, event):
+        self.streaming = not self.streaming
+        self.stream_button.label.set_text('Stop Animation' if self.streaming else 'Start Animation')
+        if self.streaming:
+            self.current_bit_index = 0
+            self.frame_counter = 0
+        else:
+            # Remove the red dot and clear bit texts when streaming is stopped
+            self.highlighted_point.set_offsets([])
+            self.bit_text.set_text("")
+        self.fig.canvas.draw_idle()
+
+    def on_click(self, event):
+        if event.inaxes == self.ax_const and not self.streaming:
+            cont, ind = self.scatter.contains(event)
+            if cont:
+                i, q = self.qam_signal[ind['ind'][0]].real, self.qam_signal[ind['ind'][0]].imag
+                self.sAmp2.set_val(i)
+                self.sAmp1.set_val(q)
+                self.update_plot(None)
+                # Update the red dot position
+                self.highlighted_point.set_offsets([[i, q]])
+                self.fig.canvas.draw_idle()
 
     def on_close(self, event):
         logging.info("Window close event triggered")
