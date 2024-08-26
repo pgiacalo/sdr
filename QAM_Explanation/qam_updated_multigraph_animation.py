@@ -67,7 +67,7 @@ def hover(event):
     if event.inaxes == ax_const:
         cont, _ = scatter.contains(event)
         if cont:
-            ax_const.set_title(f'{M}-QAM Constellation Diagram (Hovering)', color='red')
+            ax_const.set_title(f'{M}-QAM Constellation Diagram (Hovering)', color='black')
         else:
             ax_const.set_title(f'{M}-QAM Constellation Diagram', color='black')
         fig.canvas.draw_idle()
@@ -203,8 +203,8 @@ ax_const.set_yticks(np.arange(-5, 6, 1))
 ax_const.axhline(0, color='lightgray', linestyle='-')
 ax_const.axvline(0, color='lightgray', linestyle='-')
 ax_const.grid(True)
-ax_const.set_xlabel('In-Phase (I)')
-ax_const.set_ylabel('Quadrature (Q)')
+ax_const.set_xlabel('In-Phase, I (Cosine))')
+ax_const.set_ylabel('Quadrature, Q (Sine)')
 
 # Add circles to the Constellation diagram
 circle_radii = [np.sqrt(2), np.sqrt(10), np.sqrt(18)]
@@ -268,7 +268,7 @@ for i, (circle, label) in enumerate(zip(radio_circles, radio_labels)):
     circle.center = (0.1 + i * 0.3, 0.5)
     label.set_position((circle.center[0] + 0.1, circle.center[1]))
     label.set_horizontalalignment('left')
-    
+
 # Tutorial button (moved to bottom, next to radio buttons)
 tutorial_ax = plt.axes([0.72, 0.02, 0.1, 0.04])
 tutorial_button = Button(tutorial_ax, 'Tutorial')
