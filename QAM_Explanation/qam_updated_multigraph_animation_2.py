@@ -1,3 +1,13 @@
+"""
+Program Name: QAM Simulation
+
+Description: A program that simulates RF quadrature amplitude modulation (QAM)
+
+Author: Philip Giacalone
+
+Date Created: 2024-08-28
+"""
+
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider, Button, RadioButtons
